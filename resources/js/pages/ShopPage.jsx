@@ -3,15 +3,8 @@ import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-
-const SHOP_IMGS = [
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBI3xrao_zOnHCFXfra0lZeNC2jpcloIJ1WG8IJOfQhO0-gCrg0JEEsPtQ1QNxpNCsRBL-xaDR1cPgphPt5q7CAbNTcrlGzzO12RKSRvWoxm_wdaBHLzbmN010mOMp22UHNW9eYCG2dgF-psjRIiovjoEeMFzWrGef4-Q4marXlSCyYK1rvGn4z6L98rdDUKLDjostVZrqcR55JBO7fy2JcKgJQaZ-sbyQVAOquysH37RH23E6y6ZTZ3ch-jXBGTIJRAWB7N9G-pMs',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuAxml4Qu1PMB_rcM5iHDDJ_nbvhfU87U5pc69L8pfKhrRrtGTnvzVJvMBKFKAHMk-yTMV66QJOlDQIdNnfx4jV9PG3CILY41PQp0vRxK5OsoO2RhwlBOvAX1huLtQ7EiwRCFZCFJAThoZx7OSKCoCotQuq5eIzF8F3zh3JacLYA4RFDG__C_xxHpeGGroX8Gw6nHWT8nBCmLlw2y3z0mGplW8b-79YBRDZAlYrXmAFL1VTtL1Ek7H_lBpXhGBRCmYJAWTiNjZcfSPk',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBebbKPpzWTxgWm4yPhaQCOUKOT3M547gR2u0BlaxMhUGt9vxM9jPOcNUPZQaxJDfT9W_Jd_eyRC0CN8AGz6Z-EvrhFaqoWeLKn5beeorAJGWj3jPUG0X7Pyuc3PjpFbzIS5T7THFzzgGHaD4OuWsiebW7h0_tAFezeUqQojQaSRYtcuGG1RFMGwZw0FogRHs6fRo9yPpmZZIlsuagGNwQSKw1TOcRwKMFob3dmIJsQZGt8HqxhyGLmfAcCnHiNuyH9Gar-dbAeOfE',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuASR9-QzpBp59YLegyot90Xwltf_ly3w0c2eqeSUsndnFk_wIQObbIr0AVO3VZrKRBkd0ScGBzmk6oYVGdv1zpBTbTvcbdAjhRMCmIabzrquCUz7KqpbDFUmFb2pSXL-p_Ehuf_aqq7UunD59mDqqdBX1B3UwGnzfymxNrtf6CIAxMilWi0IjKZYFQhA7ldHbrtllBaU62LAUrjlmDgpPJ6PmvvfoUu0Ew68PZc1WFaJdS90nQEcs90_MsuYuVmEMVGBEZH_MGk9a0',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuC63wvjnbht-FTrCa69snB_uTfCLdg4vBgnyrJH3VOC0xYlDlkMz4T97QOtrJ4Af2Gc-ceucI6cjYjzyjyvlBjkdAHbnGeY3hes1nCa3j4CstXbaC_lEb5d-Ac1-DNm6KaVeQihl4moyu2j2LJSxMgtcBvX5alZiwKzdLaPItYWCABCcTUY5CGyOxjs1Gip53FaKrjCNwtrld1tfs1ND4PwbnVLgiXhXyY5GKSpay1GvHGbjG7COCrdUObUjOEEb8uxU9a6gPf79pE',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBEgjYLTytImIfskrbA0GTLCrPAmCCT2y5AFqTYcaY2J5hlY1jrO7lXesgkkIXMi5Fyu9_JV3Zu4t8hvvatx4bUP63NkmVI4I97-Jc7QsRGeG3Fx4s6sbWVqCUB3yB2JiKVWraKtHrvdVjUN53kCyQ477rjYmtkRiI5mQMfBIEvhC4PH5Kcyv3KOI2uD2Tuqz5y_oRP-4q-qn-sekXa-egXsbprG351I6l0rCraE57oow-c8JG8YE6QVs6OpINN6rSWayNN8OTsn_w',
-];
+import Viewer3DModal from '../components/Viewer3DModal';
+import MiniViewer3D from '../components/MiniViewer3D';
 
 export default function ShopPage() {
     const { user }              = useAuth();
@@ -23,6 +16,7 @@ export default function ShopPage() {
     const [loading, setLoading] = useState(true);
     const [added, setAdded]     = useState(null);
     const [total, setTotal]     = useState(0);
+    const [modal3D, setModal3D] = useState(null); // { product, index }
 
     useEffect(() => {
         api.get('/categories').then((res) => setCategories(res.data));
@@ -103,19 +97,29 @@ export default function ShopPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
                         {products.map((product, i) => (
                             <div key={product.id} className="group relative flex flex-col">
+                                {/* Carte produit : le modèle 3D remplace l'image statique */}
                                 <div className="relative rounded-[1rem] overflow-hidden mb-6 transition-all duration-500 group-hover:-translate-y-1"
-                                    style={{aspectRatio:'4/5', background:'#f3f4f3'}}>
-                                    <img src={SHOP_IMGS[i % SHOP_IMGS.length]} alt={product.name}
-                                        className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
-                                        style={{mixBlendMode:'multiply'}}/>
-                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    style={{aspectRatio:'4/5', background:'#1a1c1c'}}>
+
+                                    {/* Viewer 3D directement intégré */}
+                                    <MiniViewer3D
+                                        categoryId={product.category_id}
+                                        modelUrl={product.model_3d_path || undefined}
+                                        productIndex={i}
+                                    />
+
+                                    {/* Overlay au survol */}
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                        style={{background:'rgba(26,28,28,0.35)', backdropFilter:'blur(2px)'}}>
                                         <Link to={`/products/${product.id}`}
-                                            className="px-8 py-3 rounded-full font-bold text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
-                                            style={{background:'#1a1c1c', color:'#f9f9f8'}}>
-                                            Quick View
+                                            className="px-6 py-2.5 rounded-full font-bold text-sm transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex items-center gap-2"
+                                            style={{background:'#9d4300', color:'#fff', boxShadow:'0 8px 24px rgba(157,67,0,0.4)'}}>
+                                            <span className="material-symbols-outlined text-base">view_in_ar</span>
+                                            Vue détaillée 3D
                                         </Link>
                                     </div>
-                                    <div className="absolute top-4 left-4">
+
+                                    <div className="absolute top-4 left-4 z-10">
                                         <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest glass-panel"
                                             style={{color:'#1a1c1c'}}>NEW</span>
                                     </div>
@@ -161,6 +165,14 @@ export default function ShopPage() {
                     </div>
                 )}
             </main>
+
+            {modal3D && (
+                <Viewer3DModal
+                    product={modal3D.product}
+                    productIndex={modal3D.index}
+                    onClose={() => setModal3D(null)}
+                />
+            )}
 
             <footer className="w-full pt-12 pb-8 mt-24" style={{borderTop:'1px solid rgba(224,192,177,0.2)', background:'#f9f9f8'}}>
                 <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6"

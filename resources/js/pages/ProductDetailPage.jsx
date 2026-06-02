@@ -3,8 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-
-const PRODUCT_IMG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuClfOlzd3yu-kLO7gG5uXQEtTbPab1HmjBdr57z8h_GaTl9s2qwIxq_BmCl9QbMjWpg4ZyVItHpBdo2ljn7JdARre2TKye6KdTtofoUd2LAOPlZistJAlqugIsGYXJkdt6NkjBHyRKfJsahnhIeGj_HCAFYkgDjh7tOcnvPPOf44d6EA9YJpSbfXTSNpWOlboBlT9Cl7XP5lc5dkGmGu-_qxldv-TYHUO1rJWh6J-KgkRsZ7irP3Xd-1ikiABI933qgYizQuuXxlu4';
+import ProductViewer3D from '../components/ProductViewer3D';
 const COMMUNITY_IMGS = [
     'https://lh3.googleusercontent.com/aida-public/AB6AXuBMJm0GzoMfTkQQT7LZzUoItsWFJJ66CVsET9wTenWgeTYgSqElPNj4j_Y0uJCWW4OYm1xSIy217EAoEXr4HqtvzXIkP9k38uJ9iBOgj_UKCRvzX52QEmXgdk5jZVHJXk6F6dXWKQEcPv4oLRMz9PyNJkrJRbGFwXhjaXQF8sduKjnx2nG44UUEOF9YV4tMUCVYjWCr9xyCJeeP91sQr62nR199EyTgSXaKVhObW10olBAVQGg3sOZoV3cFVbf-ANrqi-qpAvC5IV8',
     'https://lh3.googleusercontent.com/aida-public/AB6AXuD2vRTeCw4qL4S2EoBDI6RctH8kcFqH2jyrW7XDIwETiE3OQ5Y0W0_3d8TTY32nN5FgtYViprKNstUowJ0jqopHad9QzpwNt5aVTp-iKVMEgUXnDuzOhzkc1ZC9Kt5qNOD9WiuEeq6rINCXM8SN267UKBzqMEqNRDqRJcuQJ5adczHCoqU04n4dPVK5vpMHtmq2RWMhSfcpxuFHl8befFTEDijERwU5wEwq-aP-EAy49_Em27m83bRxI5ETQgD9U_BkaFCvQQcbCuc',
@@ -21,6 +20,7 @@ export default function ProductDetailPage() {
     const [added, setAdded]     = useState(false);
     const [selectedFinish, setSelectedFinish] = useState('Ochre Clay');
     const [selectedSize, setSelectedSize]     = useState('Medium');
+    const [show3D, setShow3D]   = useState(true);
 
     useEffect(() => {
         api.get(`/products/${id}`)
@@ -49,34 +49,46 @@ export default function ProductDetailPage() {
                 {/* 60/40 Split */}
                 <section className="flex flex-col lg:flex-row" style={{minHeight:'calc(100vh - 56px)'}}>
                     {/* Left: Product Viewer */}
-                    <div className="lg:w-[60%] relative overflow-hidden flex items-center justify-center" style={{background:'#eeeeed', minHeight:500}}>
-                        <img src={PRODUCT_IMG} alt={product.name}
-                            className="w-full h-full object-cover opacity-90"/>
-                        <div className="absolute inset-0"
-                            style={{background:'linear-gradient(to top right, rgba(249,249,248,0.4), transparent)'}}/>
+                    <div className="lg:w-[60%] relative overflow-hidden flex flex-col" style={{background:'#eeeeed', minHeight:500}}>
+                        {/* Toggle 3D / Image */}
+                        <div className="absolute top-4 left-4 z-30 flex gap-2">
+                            <button
+                                onClick={() => setShow3D(true)}
+                                className="px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+                                style={show3D
+                                    ? {background:'#9d4300', color:'#fff', boxShadow:'0 4px 12px rgba(157,67,0,0.25)'}
+                                    : {background:'rgba(249,249,248,0.7)', color:'#584237', backdropFilter:'blur(8px)'}}>
+                                <span className="material-symbols-outlined text-base align-middle mr-1">view_in_ar</span>
+                                Vue 3D
+                            </button>
+                            <button
+                                onClick={() => setShow3D(false)}
+                                className="px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+                                style={!show3D
+                                    ? {background:'#9d4300', color:'#fff', boxShadow:'0 4px 12px rgba(157,67,0,0.25)'}
+                                    : {background:'rgba(249,249,248,0.7)', color:'#584237', backdropFilter:'blur(8px)'}}>
+                                <span className="material-symbols-outlined text-base align-middle mr-1">image</span>
+                                Photo
+                            </button>
+                        </div>
 
-                        <div className="absolute top-1/3 left-1/2 -translate-x-12 z-10">
-                            <button className="w-6 h-6 rounded-full border-4 border-white shadow-lg animate-pulse"
-                                style={{background:'#f97316'}}/>
-                        </div>
-                        <div className="absolute bottom-1/3 right-1/4 z-10">
-                            <button className="w-6 h-6 rounded-full border-4 border-white shadow-lg animate-pulse"
-                                style={{background:'#f97316'}}/>
-                        </div>
-
-                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 px-6 py-3 rounded-full z-20 glass-panel"
-                            style={{border:'1px solid rgba(224,192,177,0.2)', boxShadow:'0 20px 40px rgba(26,28,28,0.1)'}}>
-                            {[{icon:'rotate_90_degrees_ccw', label:'Rotate'},{icon:'zoom_in', label:'Zoom'},{icon:'restart_alt', label:'Reset'}].map((ctrl, i) => (
-                                <button key={ctrl.label} className="flex flex-col items-center gap-1 group">
-                                    <span className="material-symbols-outlined group-hover:text-[#9d4300] transition-colors">{ctrl.icon}</span>
-                                    <span style={{fontSize:'10px', textTransform:'uppercase', fontWeight:700, letterSpacing:'0.1em', color:'rgba(26,28,28,0.6)'}}>{ctrl.label}</span>
-                                </button>
-                            )).reduce((acc, el, i, arr) => [
-                                ...acc,
-                                el,
-                                i < arr.length - 1 ? <span key={`sep-${i}`} style={{width:1, height:24, background:'rgba(224,192,177,0.3)', display:'inline-block'}}/> : null
-                            ], [])}
-                        </div>
+                        {show3D ? (
+                            <ProductViewer3D
+                                categoryId={product.category_id}
+                                modelUrl={product.model_3d_path || undefined}
+                                productIndex={(product.id ?? 0) % 8}
+                                height="calc(100vh - 56px)"
+                            />
+                        ) : (
+                            <div style={{position:'relative', flex:1, minHeight:500}}>
+                                <img
+                                    src={product.image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuClfOlzd3yu-kLO7gG5uXQEtTbPab1HmjBdr57z8h_GaTl9s2qwIxq_BmCl9QbMjWpg4ZyVItHpBdo2ljn7JdARre2TKye6KdTtofoUd2LAOPlZistJAlqugIsGYXJkdt6NkjBHyRKfJsahnhIeGj_HCAFYkgDjh7tOcnvPPOf44d6EA9YJpSbfXTSNpWOlboBlT9Cl7XP5lc5dkGmGu-_qxldv-TYHUO1rJWh6J-KgkRsZ7irP3Xd-1ikiABI933qgYizQuuXxlu4'}
+                                    alt={product.name}
+                                    style={{width:'100%', height:'100%', objectFit:'cover', opacity:0.9, position:'absolute', inset:0}}
+                                />
+                                <div style={{position:'absolute', inset:0, background:'linear-gradient(to top right, rgba(249,249,248,0.4), transparent)'}}/>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right: Info Panel */}
