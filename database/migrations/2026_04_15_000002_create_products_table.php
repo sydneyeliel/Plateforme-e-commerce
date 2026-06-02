@@ -15,7 +15,7 @@ return new class extends Migration
             $table->text('description');
             $table->decimal('price', 10, 2);
             $table->integer('stock')->default(0);
-            $table->string('image');
+            $table->string('image')->nullable();
             $table->string('model_3d_path')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

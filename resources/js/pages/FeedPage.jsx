@@ -2,6 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 
+const FEED_POST_IMGS = [
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuA0GPn3Jt_mOlS2srA2qh9YfZiAQfWzG2nVktcK5Wjr5zew9yvuj6WjB_sgobinnWFedrzdU2ror3uiTkSIklAIUOr6utyc3igIeUuppmKGw_lB9wZXfYEbdkGocFD8AizZ3yfveBBr7l-RFj-lBFSbXUvO_tPCUAsr7n3dmYqye75V4LGY2Jy6loDFeFguJRWUBfxSraxZVcI66hOeyCpXBHVGSJzo3yrieRlkUV3-4tGDQUAC35rOMMlYN-BO9xcD1e9GobF1rxE',
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuAjm_gfch_Ob4GkaDHMCtmBVjuA85Q1Ds-0pczv0EyYQepLMZq6UG5YAPhlHbI_5_HL-qcEoih2rOiDVEzsnNrqpUdNDHnwtW9sCzXAcRnAxPj4_9cTSinap3d8q3gTZqSlh1mOWrTHntVIIYnLVOPkpieMS522wGBUdkBKCWAPIlHFu9kWFjiTEQaowH6YTrHCwbT01BxWgJb3jfAxZUyz22_tA2AM_A8Ms_EcWB_sp80ahmaf8r-zCe4sOeFiE47naNCmebYggGw',
+];
+
+const TRENDING = [
+    { name:'Solar Flare V1', by:'Studio Lux', price:'0.4 ETH', img:'https://lh3.googleusercontent.com/aida-public/AB6AXuCLPYPbD5afTCW0QW8xo26l_JV83-WR2DDy6fOLYRpC9c49wQRjXtJt96dIQblzbC4g_2GfX_gmq389xjbGC4Ivu3A4LrAG3l6VaQKTjj6pxKtVx22p9QUYtxN3IS7WYLfFmAW9epG0ZR89RA1RidYQvSfFyFP0pnNizt8MgqkiFnKnP8tUvE3o5owvp-pzuzVV-R0CRLGS5YvvYOmGJzaZWb9LRrwmsJ-Ya9uKSYEBHq-V5of7kmrCItepYhkKIO5vvoSDEIYPq7w' },
+    { name:'Kinetix Runners', by:'AeroGear', price:'0.2 ETH', img:'https://lh3.googleusercontent.com/aida-public/AB6AXuDUW3ULYsezlKrL6oRv73xCkxwTvHXPdn7jpyH7IpJ-QNNxKQeuJE_LwN06Bz7hNDqwQbvUe-ai6ixsJ6uVTYYu3o4edwPeG1AHgXIYTK5avPl4HlFEd9bV2_BC5DeYIcOTSuIbsMkqnvscBb4uN91wp8_2qP679_uGrLSGDvvVqJ_kzWa4xjVyftFcTDxxqikoHw4cCmoKHJjOkr8tDYg98PfBUGCo9sHoWE1DfVPT2hk9SfiQElfdL1lrcRiAm9ze-oSdgpCdAcw' },
+    { name:'Mercury Fluid', by:'LiquidLabs', price:'0.8 ETH', img:'https://lh3.googleusercontent.com/aida-public/AB6AXuBtxhV19uEorlIxTZTKhXY8j4Pn-LOvwNvIYuROyLwjFRFo3KonyEijihBDjc7DLbwq1ZcB46UFjJiLp-cgx0gfd560ArRvrZuQBkUfZqMduiTotkap6SfQQKiO3f8s08qSsuYX3OKb1EFlN1FE1rM8TwHJBcIGI7U5JRX2DYtv4ZJ0gBAkUd6JP0vzGJtnUNpWTcN5m4wSXDCzlYXAjR9qzLyvaYlHzUEz7fcsDwSlfcGyHchjcFKTYDonIdlvCSy-0laiDO-U9u4' },
+];
+
 function PostCard({ post, onLike, onComment, onDelete }) {
     const { user }          = useAuth();
     const [comment, setComment] = useState('');
@@ -23,63 +34,86 @@ function PostCard({ post, onLike, onComment, onDelete }) {
         onComment(post.id);
     }
 
+    const img = FEED_POST_IMGS[post.id % 2];
+
     return (
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
-            <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
-                        {post.user?.name?.[0]?.toUpperCase()}
-                    </div>
-                    <div>
-                        <p className="font-semibold text-gray-900 text-sm">{post.user?.name}</p>
-                        <p className="text-xs text-gray-400">{new Date(post.created_at).toLocaleDateString('fr-FR')}</p>
-                    </div>
-                </div>
-                {user?.id === post.user_id && (
-                    <button onClick={() => onDelete(post.id)} className="text-gray-400 hover:text-red-500 text-sm">✕</button>
-                )}
-            </div>
-
-            <p className="text-gray-800 mb-4">{post.content}</p>
-
-            <div className="flex items-center gap-6 text-sm text-gray-500 border-t border-gray-100 pt-3">
-                <button
-                    onClick={() => onLike(post.id)}
-                    className={`flex items-center gap-1 hover:text-indigo-600 ${post.liked_by_me ? 'text-indigo-600 font-medium' : ''}`}
-                >
-                    ♥ {post.likes_count ?? 0}
-                </button>
-                <button
-                    onClick={showComments ? () => setShowComments(false) : loadComments}
-                    className="flex items-center gap-1 hover:text-indigo-600"
-                >
-                    💬 {post.comments_count ?? 0}
-                </button>
-            </div>
-
-            {showComments && (
-                <div className="mt-4 space-y-3">
-                    {comments.map((c) => (
-                        <div key={c.id} className="flex gap-2 text-sm">
-                            <span className="font-medium text-gray-900">{c.user?.name}</span>
-                            <span className="text-gray-600">{c.content}</span>
+        <article className="rounded-[1.5rem] overflow-hidden group"
+            style={{background:'#ffffff', boxShadow:'0px 20px 40px rgba(26,28,28,0.06)'}}>
+            <div className="p-6">
+                <div className="flex justify-between items-start mb-6">
+                    <div className="flex gap-3 items-center">
+                        <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold"
+                            style={{background:'linear-gradient(to bottom right, #9d4300, #f97316)', fontSize:'1rem'}}>
+                            {post.user?.name?.[0]?.toUpperCase()}
                         </div>
-                    ))}
-                    {user && (
-                        <form onSubmit={submitComment} className="flex gap-2 mt-2">
-                            <input
-                                value={comment} onChange={(e) => setComment(e.target.value)}
-                                placeholder="Écrire un commentaire..."
-                                className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            />
-                            <button type="submit" className="bg-indigo-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-indigo-700">
-                                Envoyer
-                            </button>
-                        </form>
+                        <div>
+                            <h4 className="font-bold text-sm">{post.user?.name}</h4>
+                            <p className="text-[10px] uppercase tracking-wider" style={{color:'#584237'}}>
+                                {new Date(post.created_at).toLocaleDateString('fr-FR')}
+                            </p>
+                        </div>
+                    </div>
+                    {user?.id === post.user_id && (
+                        <button onClick={() => onDelete(post.id)} style={{color:'#584237'}} className="hover:text-red-500 transition-colors">
+                            <span className="material-symbols-outlined">more_horiz</span>
+                        </button>
                     )}
                 </div>
-            )}
-        </div>
+                <p className="leading-relaxed mb-4" style={{fontSize:'0.95rem'}}>{post.content}</p>
+            </div>
+
+            <div className="relative px-6 pb-2">
+                <img src={img} alt="" className="w-full object-cover rounded-[1rem]" style={{aspectRatio:'16/9'}}/>
+            </div>
+
+            <div className="px-6 pb-6 pt-4">
+                <div className="flex justify-between items-center pt-4" style={{borderTop:'1px solid rgba(224,192,177,0.1)'}}>
+                    <div className="flex gap-6">
+                        <button onClick={() => onLike(post.id)}
+                            className="flex items-center gap-2 transition-colors hover:text-red-500"
+                            style={{color: post.liked_by_me ? '#ef4444' : '#584237'}}>
+                            <span className="material-symbols-outlined" style={post.liked_by_me ? {fontVariationSettings:"'FILL' 1"} : {}}>favorite</span>
+                            <span className="text-xs font-semibold">{post.likes_count ?? 0}</span>
+                        </button>
+                        <button onClick={showComments ? () => setShowComments(false) : loadComments}
+                            className="flex items-center gap-2 transition-colors hover:text-[#9d4300]" style={{color:'#584237'}}>
+                            <span className="material-symbols-outlined">chat_bubble</span>
+                            <span className="text-xs font-semibold">{post.comments_count ?? 0}</span>
+                        </button>
+                        <button className="flex items-center gap-2 transition-colors hover:text-[#9d4300]" style={{color:'#584237'}}>
+                            <span className="material-symbols-outlined">share</span>
+                        </button>
+                    </div>
+                    <button className="transition-colors hover:text-[#9d4300]" style={{color:'#584237'}}>
+                        <span className="material-symbols-outlined">bookmark_border</span>
+                    </button>
+                </div>
+
+                {showComments && (
+                    <div className="mt-4 space-y-3">
+                        {comments.map((c) => (
+                            <div key={c.id} className="flex gap-2 text-sm">
+                                <span className="font-bold">{c.user?.name}</span>
+                                <span style={{color:'#584237'}}>{c.content}</span>
+                            </div>
+                        ))}
+                        {user && (
+                            <form onSubmit={submitComment} className="flex gap-2 mt-2">
+                                <input value={comment} onChange={(e) => setComment(e.target.value)}
+                                    placeholder="Écrire un commentaire..."
+                                    className="flex-1 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+                                    style={{background:'#f3f4f3', border:'1px solid rgba(224,192,177,0.2)'}}/>
+                                <button type="submit"
+                                    className="px-3 py-1.5 rounded-lg text-sm text-white font-semibold"
+                                    style={{background:'linear-gradient(to right, #9d4300, #f97316)'}}>
+                                    Envoyer
+                                </button>
+                            </form>
+                        )}
+                    </div>
+                )}
+            </div>
+        </article>
     );
 }
 
@@ -94,11 +128,8 @@ export default function FeedPage() {
     async function fetchPosts(p = 1) {
         const res = await api.get('/posts', { params: { page: p } });
         const data = res.data;
-        if (p === 1) {
-            setPosts(data.data);
-        } else {
-            setPosts((prev) => [...prev, ...data.data]);
-        }
+        if (p === 1) setPosts(data.data);
+        else setPosts((prev) => [...prev, ...data.data]);
         setHasMore(data.current_page < data.last_page);
         setLoading(false);
     }
@@ -116,9 +147,7 @@ export default function FeedPage() {
     async function handleLike(postId) {
         const res = await api.post(`/posts/${postId}/like`);
         setPosts((prev) => prev.map((p) =>
-            p.id === postId
-                ? { ...p, likes_count: res.data.likes_count, liked_by_me: res.data.liked }
-                : p
+            p.id === postId ? { ...p, likes_count: res.data.likes_count, liked_by_me: res.data.liked } : p
         ));
     }
 
@@ -134,51 +163,127 @@ export default function FeedPage() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Fil d'actualité</h1>
+        <div style={{background:'#f9f9f8', color:'#1a1c1c', minHeight:'100vh'}}>
+            <main className="max-w-[1440px] mx-auto pt-24 pb-12 px-8 flex gap-12">
 
-            {user && (
-                <form onSubmit={handlePublish} className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
-                    <textarea
-                        value={newPost} onChange={(e) => setNewPost(e.target.value)}
-                        placeholder="Quoi de neuf ?"
-                        rows={3}
-                        className="w-full border-0 resize-none focus:outline-none text-gray-800 placeholder-gray-400"
-                    />
-                    <div className="flex justify-end border-t border-gray-100 pt-3">
-                        <button
-                            type="submit" disabled={!newPost.trim()}
-                            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm font-medium disabled:opacity-50"
-                        >
-                            Publier
+                {/* Left Sidebar */}
+                <aside className="w-[220px] flex-shrink-0 sticky top-24 h-fit hidden lg:block">
+                    <div className="rounded-[1.5rem] p-6 mb-8 text-center"
+                        style={{background:'#ffffff', boxShadow:'0px 20px 40px rgba(26,28,28,0.04)'}}>
+                        <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-white font-bold text-2xl mb-4"
+                            style={{background:'linear-gradient(to bottom right, #9d4300, #f97316)'}}>
+                            {user?.name?.[0]?.toUpperCase() ?? 'A'}
+                        </div>
+                        <h3 className="font-bold">{user?.name ?? 'Alex Rivera'}</h3>
+                        <p className="text-xs mb-6" style={{color:'#584237'}}>3D Sculptor</p>
+                        <div className="flex justify-between items-center px-2">
+                            <div>
+                                <div className="font-bold text-sm">{posts.length}</div>
+                                <div style={{fontSize:'10px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#584237'}}>Posts</div>
+                            </div>
+                            <div style={{width:1, height:24, background:'rgba(224,192,177,0.2)'}}/>
+                            <div>
+                                <div className="font-bold text-sm">4.2k</div>
+                                <div style={{fontSize:'10px', textTransform:'uppercase', letterSpacing:'0.1em', color:'#584237'}}>Followers</div>
+                            </div>
+                        </div>
+                    </div>
+                    <nav className="space-y-2">
+                        {[{icon:'dynamic_feed', label:'My Feed', active:true},{icon:'explore', label:'Explore'},{icon:'bookmark', label:'Saved'}].map(item => (
+                            <a key={item.label} href="#"
+                                className="flex items-center gap-4 px-4 py-3 rounded-xl transition-all"
+                                style={item.active ? {background:'#f3f4f3', color:'#9d4300', fontWeight:700} : {color:'#584237'}}>
+                                <span className="material-symbols-outlined">{item.icon}</span>
+                                <span className="text-sm">{item.label}</span>
+                            </a>
+                        ))}
+                    </nav>
+                </aside>
+
+                {/* Center Feed */}
+                <section className="flex-grow max-w-[680px]">
+                    {user && (
+                        <div className="rounded-[1.5rem] p-6 mb-8"
+                            style={{background:'#ffffff', boxShadow:'0px 20px 40px rgba(26,28,28,0.04)'}}>
+                            <form onSubmit={handlePublish}>
+                                <div className="flex gap-4">
+                                    <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-sm"
+                                        style={{background:'linear-gradient(to right, #9d4300, #f97316)'}}>
+                                        {user.name?.[0]?.toUpperCase()}
+                                    </div>
+                                    <div className="flex-grow">
+                                        <textarea value={newPost} onChange={(e) => setNewPost(e.target.value)}
+                                            placeholder="Share your latest creation..."
+                                            rows={3}
+                                            className="w-full rounded-xl p-4 text-sm focus:outline-none resize-none min-h-[100px]"
+                                            style={{background:'#f3f4f3', border:'none'}}/>
+                                        <div className="flex justify-between items-center mt-4">
+                                            <div className="flex gap-4">
+                                                {['image','view_in_ar','alternate_email'].map(ic => (
+                                                    <button key={ic} type="button" className="transition-colors hover:text-[#9d4300]" style={{color:'#584237'}}>
+                                                        <span className="material-symbols-outlined">{ic}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <button type="submit" disabled={!newPost.trim()}
+                                                className="px-6 py-2 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50 active:scale-95"
+                                                style={{background:'linear-gradient(to right, #9d4300, #f97316)'}}>
+                                                Post
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+
+                    {loading ? (
+                        <p className="text-center py-20" style={{color:'#584237'}}>Chargement...</p>
+                    ) : (
+                        <div className="space-y-12">
+                            {posts.map((post) => (
+                                <PostCard key={post.id} post={post}
+                                    onLike={handleLike} onComment={handleComment} onDelete={handleDelete}/>
+                            ))}
+                            {hasMore && (
+                                <button onClick={() => { const next = page + 1; setPage(next); fetchPosts(next); }}
+                                    className="w-full text-center py-3 text-sm font-semibold transition-colors hover:text-[#9d4300]"
+                                    style={{color:'#584237'}}>
+                                    Charger plus
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </section>
+
+                {/* Right Sidebar */}
+                <aside className="w-[260px] flex-shrink-0 space-y-12 hidden xl:block">
+                    <div>
+                        <h4 style={{fontSize:'10px', fontWeight:900, textTransform:'uppercase', letterSpacing:'0.2em', color:'#584237', marginBottom:24}}>
+                            Trending Objects
+                        </h4>
+                        <div className="space-y-4">
+                            {TRENDING.map((item) => (
+                                <div key={item.name} className="flex items-center gap-4 group cursor-pointer">
+                                    <div className="w-14 h-14 rounded-xl overflow-hidden" style={{background:'#f3f4f3'}}>
+                                        <img src={item.img} alt={item.name}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform"/>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold truncate w-32">{item.name}</p>
+                                        <p className="text-[10px]" style={{color:'#584237'}}>{item.by}</p>
+                                    </div>
+                                    <span className="text-[10px] font-bold ml-auto" style={{color:'#9d4300'}}>{item.price}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <button className="w-full mt-6 text-[10px] font-bold uppercase tracking-widest hover:underline underline-offset-4 transition-colors"
+                            style={{color:'#9d4300'}}>
+                            View All Marketplace
                         </button>
                     </div>
-                </form>
-            )}
-
-            {loading ? (
-                <p className="text-center text-gray-500">Chargement...</p>
-            ) : (
-                <div className="space-y-4">
-                    {posts.map((post) => (
-                        <PostCard
-                            key={post.id}
-                            post={post}
-                            onLike={handleLike}
-                            onComment={handleComment}
-                            onDelete={handleDelete}
-                        />
-                    ))}
-                    {hasMore && (
-                        <button
-                            onClick={() => { const next = page + 1; setPage(next); fetchPosts(next); }}
-                            className="w-full text-center text-indigo-600 hover:underline py-3 text-sm"
-                        >
-                            Charger plus
-                        </button>
-                    )}
-                </div>
-            )}
+                </aside>
+            </main>
         </div>
     );
 }

@@ -14,10 +14,13 @@
         "vite": "^8.0.0"
     },
     "dependencies": {
+        "@react-three/drei": "^10.7.7",
+        "@react-three/fiber": "^9.6.1",
         "@vitejs/plugin-react": "^6.0.2",
         "axios": "^1.16.1",
         "react": "^19.2.6",
         "react-dom": "^19.2.6",
-        "react-router-dom": "^7.15.1"
+        "react-router-dom": "^7.15.1",
+        "three": "^0.184.0"
     }
 }

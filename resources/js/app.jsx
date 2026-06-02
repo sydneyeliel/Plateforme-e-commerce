@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/Navbar';
+import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ShopPage from './pages/ShopPage';
@@ -23,7 +24,7 @@ function AppRoutes() {
         <>
             <Navbar />
             <Routes>
-                <Route path="/"          element={<Navigate to="/shop" replace />} />
+                <Route path="/"          element={<HomePage />} />
                 <Route path="/shop"      element={<ShopPage />} />
                 <Route path="/products/:id" element={<ProductDetailPage />} />
                 <Route path="/feed"      element={<FeedPage />} />
