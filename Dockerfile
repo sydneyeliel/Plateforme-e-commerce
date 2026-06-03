@@ -1,19 +1,20 @@
-# ── Stage 1 : build des assets React/Vite ─────────────────────────────────────
+# ── Stage 1 : build assets React/Vite ─────────────────────────────────────────
 FROM node:22-alpine AS frontend
-
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
-# ── Stage 2 : application PHP-FPM ─────────────────────────────────────────────
+# ── Stage 2 : application (nginx + PHP-FPM dans un seul container) ─────────────
 FROM php:8.3-fpm-alpine AS app
 
 WORKDIR /var/www/html
 
-# Extensions PHP nécessaires
+# Nginx + Supervisor + extensions PHP
 RUN apk add --no-cache \
+        nginx \
+        supervisor \
         git \
         curl \
         libzip-dev \
@@ -27,24 +28,34 @@ RUN apk add --no-cache \
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copier les sources
+# Sources
 COPY . .
 
-# Récupérer le build Vite depuis le stage frontend
+# Assets Vite buildés
 COPY --from=frontend /app/public/build ./public/build
 
-# Dépendances PHP (sans dev)
+# Dépendances PHP
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
+# Config nginx
+COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+
+# Config supervisor
+COPY docker/supervisord.conf /etc/supervisord.conf
+
 # Permissions
-RUN chown -R www-data:www-data /var/www/html \
+RUN mkdir -p /var/www/html/database \
+    && touch /var/www/html/database/database.sqlite \
+    && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
+    && chmod -R 755 /var/www/html/bootstrap/cache \
+    && mkdir -p /run/nginx
 
 # Entrypoint
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 9000
+EXPOSE 80
+
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["php-fpm"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
