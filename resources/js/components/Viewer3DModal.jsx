@@ -49,8 +49,10 @@ export default function Viewer3DModal({ product, productIndex, onClose }) {
                 {/* 3D Canvas */}
                 <div className="flex-1 relative" style={{ minHeight: 0 }}>
                     <ProductViewer3D
+                        productName={product?.name}
                         categoryId={product?.category_id}
                         productIndex={productIndex}
+                        height="100%"
                     />
                 </div>
 

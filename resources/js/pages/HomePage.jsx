@@ -1,157 +1,209 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import Viewer3DModal from '../components/Viewer3DModal';
 
-const HERO_IMG   = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDpAqPocNxHW_CaqCvNymlY-MLA-D91H2IiUyXeRwDd-JiWBJfd9KmwJzUk-chULyRo8ysZU9fSikG4OvUg5zK6yF1ikdR-XpAqHrVJw5QNHI4TmNz1WJAEJNr86jN65XGZN7xrL05jyew1GuB79uG7yGVh5GBPwiRlTNg8g7rCFdXxg_Lbf3fmm-ib-cEJ-IRdzdB4vLMbiBE6t-JGh0szHn84yiSFUoavitCZqT7XM0707FHVrYgjuA_qKmhET5VtUGsFuNT1m7c';
-const PROD_IMGS  = [
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBDeUFaSJpTiAtcRt2u-sfRmkU9adHqXUZk2sWFJZZPzPiyoP5qMTfVtCfcwKfEm0eoFpj-1DQhn_13Y--e8iDJzRo4RMcSu5Zm3xd3zGxRVpK8tn0nw78eFJGNleByN9QWYLFdSaCmI_YSXdYGnSd8-8RGErm6WEH-bjzQEaQk8h83FC5dxJQuwyJ3TLsvXLU8XTOWm92VR346fvYVhdDIAAu8hxdnsTZqEEm2DKMKHJPSryzlbZ7pSYr1cI6_iksCoNQVuNHCtOA',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuDagwFUUr7T48zGZouTzQqYO_3ktr6qx0fmGH88s1UOAqAIlO4x0EO_wyw3Ll0Z_0H6kFSnNraXCMsLkejuf5aAllk0wpbEirzZVHNn2oUcw-1DBfjrCxoNefPlhyWsStmRjB3-Ra-dAwT5um1aRVEM3D0tbDuPSj69A-2ysdicHQwR8mImjxkNZNTt3o51UvKLRFaQKv4Ca0uiU2fWvfjzZuk2F4b08fbWxotnok4RYjET3Xs808ycOk-AQXU0E87gmu-IR1FvCdY',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuDQbmUxAgZGkJCx8zh-uiVRxpzNdbi4_osN49dZMO_sDdNcnj4INoOhbydXRHt1yIrhsKo8IhzTj5qhdifTVUbdhliEDIhL7XVAL7voVXcQ85zPIGQqG1aZRhleWt6cGcN4R2beB4qdyf7iu5Al0xkoejARvbRXMdbq3eAihHCPxsOsgPEjIaAyE2ym5llgkegxrscD6Ksd8RpZHyLnzMRRPoCKRevjpIJ7tLb23bLEKXXLpRrNgdI-i643_z62SOxdqVTzlMTmzRk',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuCUQIxrhaMteHNsUvET7473yNBy9i9cRC-EWTWVwLSSLV6of3Ap8733mE-ujh-9H_OxMsWoHFsDtMxIYefVh4dUSd9xZpLXwSTxkoTAo21LiTmUYJbTWQRPoH0i__FfgslsWROOAKqpVb7KSkvEQd69vUcqGgq0aXsWYWVLCVXHzXPYoEPte25y-0vgEdJHyXdjmbP0v4ktRTSl15c1ywzkQqlMWG2CNbHRuikewr3jBrJoCXIIAF2C16CAw33tKsZtEQHXmh7KXUo',
+const FEED_POSTS = [
+    { user: '@marcus_vibe',    color: '#0e7490', icon: 'view_in_ar'      },
+    { user: '@clay_steel',     color: '#0891b2', icon: 'deployed_code'   },
+    { user: '@retro_aether',   color: '#155e75', icon: 'diamond'         },
+    { user: '@gallery_spatial',color: '#164e63', icon: 'auto_awesome'    },
 ];
-const FEED_IMGS = [
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBHEPPlEp-Kt6RgoF2Igs6M37mr-IyPZGQ9xxKMG-qgJPsUsyoO3kytb_7TqGc4oluqtq2Bdlz0R6n9BprdcHme0ztT0IizDRUUnSXhehQ-7jw3lPlCyvFQbK-wRQspZvX_X1myaDI7pcV293p_RQ26uzsbVICLvkmSlMqdaueXhvTnQEpJMLrjGRAm276AZBIWYRoB3x9esnLkxxqFtn3Q9Ludx8DEpDH7zay8fXD2A7V_2JaxdMrJUA8ch5Splp3-A8mFghJlIaU',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuC8Gc2Qc0GkEvc9G5gFfdh87RDcrxdR6qIVq3r6bsjf9qcCzertcy5pnZosRVvHE2LP8o9_xe28Lr7FsAwAxSqWtmwALmLmunI0axRm41f1iYJBiU8cn8KHqOZa3P_O4haiL6M-9AK5KxgmY3hcnUQvbmvqaQDFxTiYqs2JaCvuVnWltWllfbRyclwnoW5mvpg8jZBc1h32Y7EyHYc51YEfw_yICX-XBKkLCIuZgi51YH-da3r3u0QrybTcCRHKCNWYQGgGUvxR4I0',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuAiKVaSXwiX_57tKX7PNtDi-24TtQtU9s-IQRrsPEcv3KrZMjg-_gMi1Ytgx7GHmmTkja5tl9QP8Uw8JO_p_5G3rAm7t2xarwLI3mS3yZByyfskKAS-fMJwp4mRgSlSXXgnLheexdPW0Hk1_ABS9dMN2QhqJYVGKw9ChSypPObvv3sW4B6JycbhH__cWWM3CF426fPgknE3J_M8Ja4rjZk4Q3v2snFe7BdlWqm-v8SvfoqfGrX8K_SGjSkSu0-DZtF0ZV1OigsZxm4',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBc0icxr4Ve9_vpLFCJM9eQzJYJamJ6fzNfb18Su_5bSHvu7Lg1Y4cL2LLV7RPY9wOJ9Yfb8ffNDTADLrhZvkCn9kCZHKhl35kp8ZvRf86pJkILNw6B8fngZXJqeoRMFa83KGukt6EcTrnuEx8jHkZv-Qs5VLdjF9qDChQbieuUTLz6uLgoplmTD4UQIPZIUNqjwQ8WfdUQI6muRppoHk7_x8vXMUU-rZb8aRa2DkWzdv7pkpCYa7zOaQ1WPjv74h_-pKobQjSUwx0',
-];
-const PROD_NAMES = ['Ocular Pro G1', 'Aether Audio V3', 'Velocity Runner', 'Stone Series Chrono'];
-const PROD_CATS  = ['Wearables / Next-Gen', 'Audio / Immersive', 'Fashion / Motion', 'Lifestyle / Static'];
-const PROD_PRICES= ['$899', '$450', '$180', '$299'];
-const FEED_USERS = ['@marcus_vibe', '@clay_and_steel', '@retro_aether', '@gallery_spatial'];
 
 export default function HomePage() {
     const [products, setProducts] = useState([]);
+    const [modal3D, setModal3D]   = useState(null);
+    const [heroIdx, setHeroIdx]   = useState(0);
 
     useEffect(() => {
         api.get('/products').then((res) => setProducts(res.data.data?.slice(0, 4) ?? []));
     }, []);
 
-    return (
-        <div style={{background:'#f9f9f8', color:'#1a1c1c', fontFamily:"'Plus Jakarta Sans', sans-serif"}}>
+    const heroProduct = products[heroIdx] ?? null;
 
-            {/* ── Hero ─────────────────────────────────────────────── */}
-            <section className="relative min-h-screen flex items-center pt-20 overflow-hidden"
-                style={{background:'radial-gradient(circle at 70% 50%, rgba(249,115,22,0.05) 0%, transparent 50%)'}}>
-                <div className="container mx-auto px-8 grid lg:grid-cols-2 gap-12 items-center">
-                    <div className="z-10 space-y-8 max-w-2xl">
-                        <h1 className="font-extrabold tracking-tight" style={{fontSize:'3.5rem', lineHeight:1.1}}>
-                            Explore products like{' '}
-                            <span style={{
-                                background:'linear-gradient(to right, #9d4300, #f97316)',
-                                WebkitBackgroundClip:'text',
-                                WebkitTextFillColor:'transparent'
-                            }}>never before</span>
-                        </h1>
-                        <p className="text-lg leading-relaxed max-w-lg" style={{color:'#584237'}}>
-                            The future of commerce is tactile. Dive into high-fidelity 3D environments where every texture, shadow, and detail is rendered with ethereal precision.
+    return (
+        <div style={{ background: '#f9f9f8', color: '#1a1c1c' }}>
+
+            {/* ── HERO ─────────────────────────────────────────────── */}
+            <section
+                className="min-h-screen flex items-center pt-20"
+                style={{ background: '#fff' }}
+            >
+                <div className="max-w-7xl mx-auto px-8 w-full grid lg:grid-cols-2 gap-16 items-center">
+
+                    {/* Texte gauche */}
+                    <div className="space-y-8">
+                        <p style={{ fontSize: 12, fontWeight: 700, color: '#9d4300', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+                            Next-Gen Commerce
                         </p>
-                        <div className="flex flex-wrap gap-4 pt-4">
-                            <Link to="/shop"
-                                className="px-8 py-4 font-semibold rounded-lg text-white transition-all hover:scale-105 active:scale-95"
-                                style={{background:'linear-gradient(to right, #9d4300, #f97316)', boxShadow:'0px 10px 20px rgba(157,67,0,0.2)'}}>
+                        <h1
+                            className="font-extrabold tracking-tighter leading-tight"
+                            style={{ fontSize: 'clamp(2.5rem,5vw,4rem)' }}
+                        >
+                            Explore products like{' '}
+                            <span style={{ color: '#9d4300', fontStyle: 'italic' }}>never before</span>
+                        </h1>
+                        <p style={{ color: '#584237', fontSize: '1rem', lineHeight: 1.7, maxWidth: 440 }}>
+                            High-fidelity 3D environments where every texture, shadow and detail
+                            is rendered with ethereal precision. Touch the future of commerce.
+                        </p>
+                        <div className="flex gap-4 flex-wrap pt-2">
+                            <Link
+                                to="/shop"
+                                className="px-8 py-4 font-bold rounded-xl text-white transition-all hover:opacity-90 hover:scale-105"
+                                style={{ background: '#9d4300', fontSize: 14, letterSpacing: '0.03em' }}
+                            >
                                 Shop the Collection
                             </Link>
-                            <button className="px-8 py-4 font-semibold rounded-lg transition-colors"
-                                style={{background:'#e8e8e7', color:'#1a1c1c'}}>
-                                Launch Metaverse
-                            </button>
+                            <Link
+                                to="/feed"
+                                className="px-8 py-4 font-bold rounded-xl transition-all hover:bg-gray-100"
+                                style={{ border: '1px solid rgba(26,28,28,0.15)', fontSize: 14, color: '#1a1c1c' }}
+                            >
+                                Explore Feed
+                            </Link>
                         </div>
                     </div>
 
-                    <div className="relative h-[600px] lg:h-[700px] flex items-center justify-center">
-                        <div className="absolute inset-0 rounded-[2.5rem] blur-3xl opacity-30"
-                            style={{background:'linear-gradient(to top right, rgba(255,182,144,0.2), transparent)'}}/>
-                        <div className="relative w-full h-full flex items-center justify-center">
-                            <img src={HERO_IMG} alt="Featured Watch"
-                                className="w-4/5 h-auto object-contain z-10"
-                                style={{filter:'drop-shadow(0 35px 60px rgba(0,0,0,0.3))'}}/>
-                            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-4 px-6 py-3 rounded-full z-20 glass-panel border"
-                                style={{borderColor:'rgba(224,192,177,0.2)', boxShadow:'0 20px 40px rgba(26,28,28,0.1)'}}>
-                                <button style={{color:'#9d4300'}}><span className="material-symbols-outlined">rotate_right</span></button>
-                                <span style={{width:1, height:16, background:'rgba(224,192,177,0.3)', display:'inline-block'}}/>
-                                <button style={{color:'#1a1c1c'}}><span className="material-symbols-outlined">zoom_in</span></button>
-                                <span style={{width:1, height:16, background:'rgba(224,192,177,0.3)', display:'inline-block'}}/>
-                                <button style={{color:'#1a1c1c'}}><span className="material-symbols-outlined">layers</span></button>
-                            </div>
+                    {/* Image héro droite */}
+                    <div className="relative flex flex-col items-center gap-6">
+                        <div
+                            className="w-full rounded-3xl overflow-hidden relative"
+                            style={{ aspectRatio: '4/3', background: '#f3f4f3', boxShadow: '0 32px 80px rgba(26,28,28,0.1)' }}
+                        >
+                            {heroProduct?.image ? (
+                                <img
+                                    src={heroProduct.image}
+                                    alt={heroProduct.name}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <img
+                                    src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=600&fit=crop&q=80"
+                                    alt="hero product"
+                                    className="w-full h-full object-cover"
+                                />
+                            )}
+                            {/* Badge produit */}
+                            {heroProduct && (
+                                <div
+                                    className="absolute bottom-5 left-5 px-4 py-3 rounded-2xl"
+                                    style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
+                                >
+                                    <p style={{ fontWeight: 700, fontSize: 13, color: '#1a1c1c' }}>{heroProduct.name}</p>
+                                    <p style={{ fontSize: 12, color: '#9d4300', fontWeight: 800 }}>
+                                        ${Number(heroProduct.price).toFixed(0)}
+                                    </p>
+                                </div>
+                            )}
+                            {/* Bouton 3D View */}
+                            {heroProduct && (
+                                <button
+                                    onClick={() => setModal3D({ name: heroProduct.name, price: `$${heroProduct.price}`, index: heroIdx, categoryId: heroProduct.category_id })}
+                                    className="absolute top-4 right-4 px-3 py-1.5 rounded-full text-white font-bold text-xs transition-all hover:scale-105"
+                                    style={{ background: '#9d4300', letterSpacing: '0.05em', boxShadow: '0 4px 12px rgba(157,67,0,0.35)' }}
+                                >
+                                    3D VIEW
+                                </button>
+                            )}
                         </div>
+
+                        {/* Miniatures produits */}
+                        {products.length > 0 && (
+                            <div className="flex gap-3">
+                                {products.map((p, i) => (
+                                    <button
+                                        key={p.id}
+                                        onClick={() => setHeroIdx(i)}
+                                        className="rounded-xl overflow-hidden transition-all"
+                                        style={{
+                                            width: 64, height: 64,
+                                            border: heroIdx === i ? '2px solid #9d4300' : '2px solid transparent',
+                                            background: '#f3f4f3',
+                                            opacity: heroIdx === i ? 1 : 0.55,
+                                        }}
+                                    >
+                                        {p.image && (
+                                            <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
+
+                {/* Scroll indicator */}
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-                    <span style={{fontSize:'10px', textTransform:'uppercase', letterSpacing:'0.2em', fontWeight:700, color:'rgba(26,28,28,0.4)'}}>Scroll</span>
-                    <span className="material-symbols-outlined animate-bounce" style={{color:'#9d4300', fontSize:'2rem'}}>keyboard_arrow_down</span>
+                    <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 700, color: 'rgba(26,28,28,0.35)' }}>Scroll</span>
+                    <span className="material-symbols-outlined animate-bounce" style={{ color: '#9d4300' }}>keyboard_arrow_down</span>
                 </div>
             </section>
 
-            {/* ── Featured Products ──────────────────────────────────── */}
-            <section className="py-24 overflow-hidden" style={{background:'#f3f4f3'}}>
-                <div className="px-8 max-w-7xl mx-auto mb-12 flex justify-between items-end">
-                    <div>
-                        <span style={{fontSize:'12px', fontWeight:700, color:'#9d4300', textTransform:'uppercase', letterSpacing:'0.1em', display:'block', marginBottom:8}}>Curation</span>
-                        <h2 className="text-4xl font-bold tracking-tighter">Featured Sculptures</h2>
-                    </div>
-                    <div className="flex gap-4">
-                        <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-white"
-                            style={{border:'1px solid rgba(224,192,177,0.3)'}}>
-                            <span className="material-symbols-outlined">west</span>
-                        </button>
-                        <button className="w-12 h-12 rounded-full flex items-center justify-center transition-colors hover:bg-white"
-                            style={{border:'1px solid rgba(224,192,177,0.3)'}}>
-                            <span className="material-symbols-outlined">east</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div className="flex gap-8 overflow-x-auto px-8 pb-12 hide-scrollbar snap-x snap-mandatory">
-                    {(products.length > 0 ? products : Array(4).fill(null)).map((product, i) => (
-                        <Link to={product ? `/products/${product.id}` : '#'} key={i}
-                            className="min-w-[320px] md:min-w-[380px] snap-start group">
-                            <div className="rounded-2xl p-6 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2"
-                                style={{background:'#f9f9f8'}}>
-                                <div className="aspect-square rounded-xl mb-6 overflow-hidden relative"
-                                    style={{background:'#f3f4f3'}}>
-                                    <img src={PROD_IMGS[i % 4]} alt={PROD_NAMES[i % 4]}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"/>
-                                    <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-white"
-                                        style={{background:'#9d4300', fontSize:'10px', fontWeight:700}}>3D VIEW</div>
-                                </div>
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h3 className="text-xl font-bold tracking-tight">{product?.name ?? PROD_NAMES[i % 4]}</h3>
-                                        <p className="text-sm mt-1" style={{color:'#584237'}}>{product?.category?.name ?? PROD_CATS[i % 4]}</p>
-                                    </div>
-                                    <span className="text-lg font-bold" style={{color:'#9d4300'}}>
-                                        {product ? `$${product.price}` : PROD_PRICES[i % 4]}
-                                    </span>
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            </section>
-
-            {/* ── Social Feed ───────────────────────────────────────── */}
-            <section className="py-24" style={{background:'#f9f9f8'}}>
+            {/* ── FEATURED SCULPTURES ──────────────────────────────── */}
+            <section className="py-24" style={{ background: '#f9f9f8' }}>
                 <div className="max-w-7xl mx-auto px-8">
-                    <div className="text-center mb-20 max-w-2xl mx-auto">
-                        <span style={{fontSize:'12px', fontWeight:800, color:'#9d4300', textTransform:'uppercase', letterSpacing:'0.3em', display:'block', marginBottom:16}}>The Feed</span>
-                        <h2 className="text-5xl font-extrabold tracking-tighter mb-6">Shared by the Collective</h2>
-                        <p style={{color:'#584237'}}>Real users, real perspectives. Explore how our community styles their digital and physical Aetheria pieces.</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <Link to="/feed" className="lg:col-span-2 lg:row-span-2 relative group rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500">
-                            <img src={FEED_IMGS[0]} alt="Feed" className="w-full h-full object-cover"/>
-                            <div className="absolute inset-0 flex flex-col justify-end p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                style={{background:'linear-gradient(to top, rgba(0,0,0,0.6), transparent)'}}>
-                                <span className="text-white font-bold">{FEED_USERS[0]}</span>
-                            </div>
+                    <div className="flex justify-between items-end mb-10">
+                        <div>
+                            <p style={{ fontSize: 11, fontWeight: 700, color: '#9d4300', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 8 }}>
+                                Curation
+                            </p>
+                            <h2 className="text-3xl font-extrabold tracking-tighter" style={{ color: '#1a1c1c' }}>
+                                Featured Sculptures
+                            </h2>
+                        </div>
+                        <Link to="/shop" style={{ fontSize: 13, fontWeight: 600, color: '#9d4300' }}
+                            className="hover:opacity-75 transition-opacity">
+                            View all →
                         </Link>
-                        {[1,2,3].map((i) => (
-                            <Link to="/feed" key={i} className="relative group rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 h-64">
-                                <img src={FEED_IMGS[i]} alt="Feed" className="w-full h-full object-cover"/>
-                                <div className="absolute inset-0 flex items-end p-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    style={{background:'linear-gradient(to top, rgba(0,0,0,0.4), transparent)'}}>
-                                    <span className="text-white text-xs font-bold">{FEED_USERS[i]}</span>
+                    </div>
+
+                    {/* Scroll horizontal comme dans le maquette */}
+                    <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar">
+                        {(products.length > 0 ? products : Array(4).fill(null)).map((product, i) => (
+                            <Link
+                                key={product?.id ?? i}
+                                to={product ? `/products/${product.id}` : '/shop'}
+                                className="group flex-shrink-0 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+                                style={{ width: 260, background: '#fff', border: '1px solid rgba(26,28,28,0.07)' }}
+                            >
+                                {/* Image */}
+                                <div className="relative overflow-hidden" style={{ height: 240, background: '#f3f4f3' }}>
+                                    {product?.image ? (
+                                        <img
+                                            src={product.image}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <span className="material-symbols-outlined" style={{ fontSize: 48, color: 'rgba(26,28,28,0.15)' }}>deployed_code</span>
+                                        </div>
+                                    )}
+                                    <span className="absolute top-3 left-3 px-2 py-1 rounded-md text-xs font-bold"
+                                        style={{ background: 'rgba(255,255,255,0.9)', color: '#584237' }}>
+                                        {product?.category?.name ?? 'Aetheria'}
+                                    </span>
+                                    {product && (
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); setModal3D({ name: product.name, price: `$${product.price}`, index: i, categoryId: product.category_id }); }}
+                                            className="absolute top-3 right-3 px-2 py-1 rounded-md text-xs font-bold transition-all hover:scale-110"
+                                            style={{ background: '#9d4300', color: '#fff' }}>
+                                            3D
+                                        </button>
+                                    )}
+                                </div>
+                                {/* Infos */}
+                                <div className="p-4">
+                                    <h3 style={{ fontWeight: 700, fontSize: 14, color: '#1a1c1c', marginBottom: 6 }}>
+                                        {product?.name ?? '—'}
+                                    </h3>
+                                    <div className="flex justify-between items-center">
+                                        <span style={{ fontSize: 11, color: '#584237' }}>{product?.category?.name ?? ''}</span>
+                                        <span style={{ fontWeight: 800, fontSize: 14, color: '#9d4300' }}>
+                                            {product ? `$${Number(product.price).toFixed(0)}` : '—'}
+                                        </span>
+                                    </div>
                                 </div>
                             </Link>
                         ))}
@@ -159,20 +211,91 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* ── Footer ────────────────────────────────────────────── */}
-            <footer className="w-full pt-12 pb-8 mt-24" style={{background:'#f9f9f8', borderTop:'1px solid rgba(224,192,177,0.2)'}}>
-                <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="text-lg font-black tracking-tight">AETHERIA</div>
-                    <div className="flex flex-wrap justify-center gap-8" style={{fontSize:'10px', textTransform:'uppercase', letterSpacing:'0.05em', color:'rgba(26,28,28,0.4)'}}>
-                        {['Imprint','Terms of Service','Creator Policy','Sustainability'].map((l) => (
-                            <a key={l} href="#" className="hover:text-[#F97316] underline underline-offset-4 transition-all">{l}</a>
+            {/* ── SHARED BY THE COLLECTIVE ─────────────────────────── */}
+            <section className="py-24" style={{ background: '#f9f9f8' }}>
+                <div className="max-w-7xl mx-auto px-8">
+                    <div className="text-center mb-16">
+                        <p style={{ fontSize: 11, fontWeight: 700, color: '#9d4300', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12 }}>
+                            The Feed
+                        </p>
+                        <h2 className="text-4xl font-extrabold tracking-tighter">Shared by the Collective</h2>
+                        <p style={{ color: '#584237', marginTop: 12, fontSize: 14, maxWidth: 480, margin: '12px auto 0' }}>
+                            Real users, real perspectives — explore how the community styles their Aetheria pieces.
+                        </p>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '200px 200px', gap: 16 }}>
+                        {/* Grande card gauche (2 lignes) */}
+                        <Link to="/feed"
+                            style={{ gridRow: 'span 2', background: FEED_POSTS[0].color, borderRadius: 24, padding: 28, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textDecoration: 'none', transition: 'opacity 0.2s' }}
+                            className="hover:opacity-90">
+                            <span className="material-symbols-outlined" style={{ color: 'rgba(255,255,255,0.25)', fontSize: 56, alignSelf: 'flex-end' }}>
+                                {FEED_POSTS[0].icon}
+                            </span>
+                            <div>
+                                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                                    <span className="material-symbols-outlined" style={{ color: '#fff', fontSize: 22 }}>person</span>
+                                </div>
+                                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>{FEED_POSTS[0].user}</p>
+                                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 3 }}>View post →</p>
+                            </div>
+                        </Link>
+
+                        {/* 3 petites cards droite */}
+                        {FEED_POSTS.slice(1).map((post, i) => (
+                            <Link key={i} to="/feed"
+                                style={{ background: post.color, borderRadius: 20, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textDecoration: 'none', transition: 'opacity 0.2s' }}
+                                className="hover:opacity-90">
+                                <span className="material-symbols-outlined" style={{ color: 'rgba(255,255,255,0.22)', fontSize: 32, alignSelf: 'flex-end' }}>
+                                    {post.icon}
+                                </span>
+                                <div>
+                                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                                        <span className="material-symbols-outlined" style={{ color: '#fff', fontSize: 16 }}>person</span>
+                                    </div>
+                                    <p style={{ color: '#fff', fontWeight: 600, fontSize: 12 }}>{post.user}</p>
+                                </div>
+                            </Link>
                         ))}
                     </div>
-                    <div style={{fontSize:'10px', textTransform:'uppercase', letterSpacing:'0.05em', color:'rgba(26,28,28,0.4)'}}>
+
+                    <div className="text-center mt-12">
+                        <Link
+                            to="/feed"
+                            className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-semibold transition-all hover:opacity-80"
+                            style={{ border: '1px solid rgba(26,28,28,0.15)', color: '#1a1c1c', fontSize: 14 }}
+                        >
+                            Explore the Feed
+                            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>arrow_forward</span>
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            {/* ── FOOTER ───────────────────────────────────────────── */}
+            <footer className="w-full pt-12 pb-8" style={{ background: '#f9f9f8', borderTop: '1px solid rgba(224,192,177,0.2)' }}>
+                <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div style={{ fontSize: 16, fontWeight: 900, letterSpacing: '-0.02em', color: '#1a1c1c' }}>AETHERIA</div>
+                    <div className="flex flex-wrap justify-center gap-8"
+                        style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(26,28,28,0.4)' }}>
+                        {['Imprint', 'Terms of Service', 'Creator Policy', 'Sustainability'].map((l) => (
+                            <a key={l} href="#" className="hover:text-[#9d4300] underline underline-offset-4 transition-colors">{l}</a>
+                        ))}
+                    </div>
+                    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(26,28,28,0.4)' }}>
                         © 2026 Aetheria Tactile. All rights reserved.
                     </div>
                 </div>
             </footer>
+
+            {/* Modale 3D */}
+            {modal3D && (
+                <Viewer3DModal
+                    product={{ name: modal3D.name, price: modal3D.price?.replace('$', ''), category_id: modal3D.categoryId }}
+                    productIndex={modal3D.index}
+                    onClose={() => setModal3D(null)}
+                />
+            )}
         </div>
     );
 }
