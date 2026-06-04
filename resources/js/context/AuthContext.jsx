@@ -8,23 +8,25 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Récupère le token OAuth depuis l'URL (?token=xxx)
-        const params = new URLSearchParams(window.location.search);
-        const urlToken = params.get('token');
-        if (urlToken) {
-            localStorage.setItem('token', urlToken);
-            window.history.replaceState({}, '', '/');
-        }
+        async function init() {
+            // Récupère le token OAuth depuis la session serveur (jamais dans l'URL)
+            const res = await fetch('/auth/token', { credentials: 'include' });
+            const data = await res.json();
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
 
-        const token = localStorage.getItem('token');
-        if (token) {
-            api.get('/me')
-                .then((res) => setUser(res.data))
-                .catch(() => localStorage.removeItem('token'))
-                .finally(() => setLoading(false));
-        } else {
-            setLoading(false);
+            const token = localStorage.getItem('token');
+            if (token) {
+                api.get('/me')
+                    .then((res) => setUser(res.data))
+                    .catch(() => localStorage.removeItem('token'))
+                    .finally(() => setLoading(false));
+            } else {
+                setLoading(false);
+            }
         }
+        init();
     }, []);
 
     async function login(email, password) {

@@ -26,18 +26,28 @@ class SocialAuthController extends Controller
             return redirect('/?auth_error=true');
         }
 
-        $user = User::updateOrCreate(
-            ['email' => $socialUser->getEmail()],
-            [
-                'name'      => $socialUser->getName() ?? $socialUser->getNickname() ?? 'User',
-                'password'  => bcrypt(Str::random(24)),
-                'avatar'    => $socialUser->getAvatar(),
-                'google_id' => $provider === 'google' ? $socialUser->getId() : null,
-            ]
-        );
+        $user = User::where('email', $socialUser->getEmail())->first();
+
+        $updateData = [
+            'name'   => $socialUser->getName() ?? $socialUser->getNickname() ?? 'User',
+            'avatar' => $socialUser->getAvatar(),
+        ];
+
+        if ($provider === 'google') {
+            $updateData['google_id'] = $socialUser->getId();
+        }
+
+        if (!$user) {
+            $updateData['email']    = $socialUser->getEmail();
+            $updateData['password'] = bcrypt(Str::random(24));
+            $user = User::create($updateData);
+        } else {
+            $user->update($updateData);
+        }
 
         $token = $user->createToken('api')->plainTextToken;
+        session()->flash('oauth_token', $token);
 
-        return redirect('/?token=' . $token);
+        return redirect('/');
     }
 }
