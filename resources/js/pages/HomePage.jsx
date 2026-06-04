@@ -3,6 +3,18 @@ import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import Viewer3DModal from '../components/Viewer3DModal';
 
+// Images de secours si la base est vide
+const FALLBACK_PRODUCTS = [
+    { id: 'f1', name: 'Kinetik Chrono',  price: 249, category: { name: 'Tech' },
+      image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop&q=80' },
+    { id: 'f2', name: 'Sonic Monolith',  price: 599, category: { name: 'Tech' },
+      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop&q=80' },
+    { id: 'f3', name: 'Aero Sprint V2',  price: 180, category: { name: 'Wear' },
+      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&h=600&fit=crop&q=80' },
+    { id: 'f4', name: 'Volt Runner X',   price: 210, category: { name: 'Wear' },
+      image: 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600&h=600&fit=crop&q=80' },
+];
+
 const FEED_POSTS = [
     { user: '@marcus_vibe',     color: '#0e7490', icon: 'view_in_ar'    },
     { user: '@clay_steel',      color: '#0891b2', icon: 'deployed_code' },
@@ -19,7 +31,8 @@ export default function HomePage() {
         api.get('/products').then((res) => setProducts(res.data.data?.slice(0, 4) ?? []));
     }, []);
 
-    const hero = products[heroIdx] ?? null;
+    const displayProducts = products.length > 0 ? products : FALLBACK_PRODUCTS;
+    const hero = displayProducts[heroIdx] ?? null;
 
     return (
         <div style={{ background: '#f9f9f8', color: '#1a1c1c' }}>
@@ -89,9 +102,9 @@ export default function HomePage() {
                         </div>
 
                         {/* Miniatures */}
-                        {products.length > 0 && (
+                        {displayProducts.length > 0 && (
                             <div className="flex gap-3">
-                                {products.map((p, i) => (
+                                {displayProducts.map((p, i) => (
                                     <button key={p.id} onClick={() => setHeroIdx(i)}
                                         className="rounded-xl overflow-hidden transition-all"
                                         style={{
@@ -130,7 +143,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-                        {(products.length > 0 ? products : Array(4).fill(null)).map((p, i) => (
+                        {displayProducts.map((p, i) => (
                             <Link key={p?.id ?? i}
                                 to={p ? `/products/${p.id}` : '/shop'}
                                 className="group rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
