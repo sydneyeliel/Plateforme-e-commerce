@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
+import SkeletonCard from '../components/SkeletonCard';
 
 function fakeStats(id) {
     const likes    = [1200, 842, 2400, 512, 1800, 3200];
@@ -23,16 +25,27 @@ const TABS = [
     { key: 'Recently Viewed', icon: 'history'         },
 ];
 
+const SORT_OPTIONS = [
+    { key: 'newest',     label: 'Newest First'     },
+    { key: 'oldest',     label: 'Oldest First'     },
+    { key: 'price_asc',  label: 'Price: Low → High' },
+    { key: 'price_desc', label: 'Price: High → Low' },
+];
+
 export default function ShopPage() {
     const { user }                       = useAuth();
     const { addToCart, cart, itemCount } = useCart();
+    const { addToast }                   = useToast();
     const [searchParams]                 = useSearchParams();
+    const sortRef                        = useRef(null);
 
     const [products, setProducts]             = useState([]);
     const [categories, setCategories]         = useState([]);
     const [activeCategory, setActiveCategory] = useState('');
+    const [sort, setSort]                     = useState('newest');
+    const [sortOpen, setSortOpen]             = useState(false);
     const [loading, setLoading]               = useState(true);
-    const [added, setAdded]                   = useState(null);
+    const [adding, setAdding]                 = useState(null);
     const [total, setTotal]                   = useState(0);
     const [sidebarTab, setSidebarTab]         = useState('Cart');
     const [showSidebar, setShowSidebar]       = useState(true);
@@ -45,7 +58,7 @@ export default function ShopPage() {
 
     useEffect(() => {
         setLoading(true);
-        const params = {};
+        const params = { sort };
         if (search)         params.search   = search;
         if (activeCategory) params.category = activeCategory;
         api.get('/products', { params })
@@ -54,15 +67,28 @@ export default function ShopPage() {
                 setTotal(res.data.total ?? 0);
             })
             .finally(() => setLoading(false));
-    }, [search, activeCategory]);
+    }, [search, activeCategory, sort]);
 
-    async function handleCart(e, productId) {
+    useEffect(() => {
+        function close(e) { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false); }
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, []);
+
+    async function handleCart(e, product) {
         e.preventDefault();
         e.stopPropagation();
-        if (!user) return;
-        await addToCart(productId, 1);
-        setAdded(productId);
-        setTimeout(() => setAdded(null), 1500);
+        if (!user) { addToast('Connectez-vous pour ajouter au panier', 'info'); return; }
+        if (adding) return;
+        setAdding(product.id);
+        try {
+            await addToCart(product.id, 1);
+            addToast(`${product.name} ajouté au panier`, 'cart');
+        } catch {
+            addToast('Erreur lors de l\'ajout au panier', 'error');
+        } finally {
+            setAdding(null);
+        }
     }
 
     const sidebarOpen = user && showSidebar;
@@ -138,27 +164,49 @@ export default function ShopPage() {
                         <strong style={{ color: '#1a1c1c' }}>{total}</strong> Items found
                     </span>
                     <div className="flex items-center gap-3">
-                        <button
-                            className="flex items-center gap-1.5 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors hover:bg-gray-100"
-                            style={{ color: '#1a1c1c', border: '1px solid rgba(26,28,28,0.12)' }}
-                        >
-                            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>tune</span>
-                            Filters
-                        </button>
-                        <span style={{ color: 'rgba(26,28,28,0.18)', userSelect: 'none' }}>|</span>
-                        <button
-                            className="flex items-center gap-0.5 text-sm"
-                            style={{ color: '#1a1c1c' }}
-                        >
-                            Sort:&nbsp;<span style={{ fontWeight: 600 }}>Newest First</span>
-                            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>expand_more</span>
-                        </button>
+                        {/* Sort dropdown */}
+                        <div className="relative" ref={sortRef}>
+                            <button
+                                onClick={() => setSortOpen(o => !o)}
+                                className="flex items-center gap-1.5 text-sm px-4 py-1.5 rounded-lg transition-colors hover:bg-gray-100"
+                                style={{ color: '#1a1c1c', border: '1px solid rgba(26,28,28,0.12)' }}
+                            >
+                                Sort:&nbsp;<span style={{ fontWeight: 700 }}>{SORT_OPTIONS.find(o => o.key === sort)?.label}</span>
+                                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>expand_more</span>
+                            </button>
+                            {sortOpen && (
+                                <div className="absolute right-0 mt-1 w-52 rounded-xl overflow-hidden z-50"
+                                    style={{ background: '#fff', boxShadow: '0 8px 32px rgba(26,28,28,0.12)', border: '1px solid rgba(26,28,28,0.08)' }}>
+                                    {SORT_OPTIONS.map(o => (
+                                        <button key={o.key}
+                                            onClick={() => { setSort(o.key); setSortOpen(false); }}
+                                            className="w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-[#f9f0eb]"
+                                            style={{ color: sort === o.key ? '#9d4300' : '#1a1c1c', fontWeight: sort === o.key ? 700 : 500 }}>
+                                            {o.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {/* Product grid */}
                 {loading ? (
-                    <p className="text-center py-20" style={{ color: '#584237' }}>Chargement…</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {Array(6).fill(null).map((_, i) => <SkeletonCard key={i} />)}
+                    </div>
+                ) : products.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-32 gap-4">
+                        <span className="material-symbols-outlined" style={{ fontSize: 56, color: 'rgba(26,28,28,0.15)' }}>search_off</span>
+                        <p style={{ fontWeight: 700, fontSize: 16, color: '#1a1c1c' }}>Aucun produit trouvé</p>
+                        <p style={{ fontSize: 13, color: '#584237' }}>Essayez une autre catégorie ou un autre filtre</p>
+                        <button onClick={() => { setActiveCategory(''); }}
+                            className="mt-2 px-6 py-2 rounded-full text-sm font-bold text-white"
+                            style={{ background: '#9d4300' }}>
+                            Voir tout
+                        </button>
+                    </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {products.map((product, i) => {
@@ -293,8 +341,8 @@ export default function ShopPage() {
                                             </div>
 
                                             <button
-                                                onClick={(e) => handleCart(e, product.id)}
-                                                disabled={!user || product.stock === 0}
+                                                onClick={(e) => handleCart(e, product)}
+                                                disabled={product.stock === 0 || adding === product.id}
                                                 title={!user ? 'Connectez-vous pour ajouter' : 'Ajouter au panier'}
                                                 style={{
                                                     width: 32,
@@ -322,21 +370,9 @@ export default function ShopPage() {
                                                     e.currentTarget.style.borderColor = 'rgba(26,28,28,0.15)';
                                                 }}
                                             >
-                                                {added === product.id ? (
-                                                    <span
-                                                        className="material-symbols-outlined"
-                                                        style={{ fontSize: 14 }}
-                                                    >
-                                                        check
-                                                    </span>
-                                                ) : (
-                                                    <span
-                                                        className="material-symbols-outlined"
-                                                        style={{ fontSize: 14 }}
-                                                    >
-                                                        add_shopping_cart
-                                                    </span>
-                                                )}
+                                                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                                                    {adding === product.id ? 'hourglass_empty' : 'add_shopping_cart'}
+                                                </span>
                                             </button>
                                         </div>
                                     </div>

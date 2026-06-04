@@ -3,35 +3,35 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import ProductViewer3D from '../components/ProductViewer3D';
 
-/* Images produit par catégorie : correspond aux photos du catalogue */
 const CATEGORY_IMGS = {
-    1: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBDeUFaSJpTiAtcRt2u-sfRmkU9adHqXUZk2sWFJZZPzPiyoP5qMTfVtCfcwKfEm0eoFpj-1DQhn_13Y--e8iDJzRo4RMcSu5Zm3xd3zGxRVpK8tn0nw78eFJGNleByN9QWYLFdSaCmI_YSXdYGnSd8-8RGErm6WEH-bjzQEaQk8h83FC5dxJQuwyJ3TLsvXLU8XTOWm92VR346fvYVhdDIAAu8hxdnsTZqEEm2DKMKHJPSryzlbZ7pSYr1cI6_iksCoNQVuNHCtOA',  // Lunettes
-    2: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDagwFUUr7T48zGZouTzQqYO_3ktr6qx0fmGH88s1UOAqAIlO4x0EO_wyw3Ll0Z_0H6kFSnNraXCMsLkejuf5aAllk0wpbEirzZVHNn2oUcw-1DBfjrCxoNefPlhyWsStmRjB3-Ra-dAwT5um1aRVEM3D0tbDuPSj69A-2ysdicHQwR8mImjxkNZNTt3o51UvKLRFaQKv4Ca0uiU2fWvfjzZuk2F4b08fbWxotnok4RYjET3Xs808ycOk-AQXU0E87gmu-IR1FvCdY',  // Casques
-    3: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDQbmUxAgZGkJCx8zh-uiVRxpzNdbi4_osN49dZMO_sDdNcnj4INoOhbydXRHt1yIrhsKo8IhzTj5qhdifTVUbdhliEDIhL7XVAL7voVXcQ85zPIGQqG1aZRhleWt6cGcN4R2beB4qdyf7iu5Al0xkoejARvbRXMdbq3eAihHCPxsOsgPEjIaAyE2ym5llgkegxrscD6Ksd8RpZHyLnzMRRoPoCKRevjpIJ7tLb23bLEKXXLpRrNgdI-i643_z62SOxdqVTzlMTmzRk', // Chaussures
-    4: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCUQIxrhaMteHNsUvET7473yNBy9i9cRC-EWTWVwLSSLV6of3Ap8733mE-ujh-9H_OxMsWoHFsDtMxIYefVh4dUSd9xZpLXwSTxkoTAo21LiTmUYJbTWQRPoH0i__FfgslsWROOAKqpVb7KSkvEQd69vUcqGgq0aXsWYWVLCVXHzXPYoEPte25y-0vgEdJHyXdjmbP0v4ktRTSl15c1ywzkQqlMWG2CNbHRuikewr3jBrJoCXIIAF2C16CAw33tKsZtEQHXmh7KXUo',  // Montres
+    1: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=800&fit=crop&q=85',
+    2: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&h=800&fit=crop&q=85',
+    3: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=800&fit=crop&q=85',
 };
 
 const COMMUNITY_IMGS = [
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBMJm0GzoMfTkQQT7LZzUoItsWFJJ66CVsET9wTenWgeTYgSqElPNj4j_Y0uJCWW4OYm1xSIy217EAoEXr4HqtvzXIkP9k38uJ9iBOgj_UKCRvzX52QEmXgdk5jZVHJXk6F6dXWKQEcPv4oLRMz9PyNJkrJRbGFwXhjaXQF8sduKjnx2nG44UUEOF9YV4tMUCVYjWCr9xyCJeeP91sQr62nR199EyTgSXaKVhObW10olBAVQGg3sOZoV3cFVbf-ANrqi-qpAvC5IV8',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuD2vRTeCw4qL4S2EoBDI6RctH8kcFqH2jyrW7XDIwETiE3OQ5Y0W0_3d8TTY32nN5FgtYViprKNstUowJ0jqopHad9QzpwNt5aVTp-iKVMEgUXnDuzOhzkc1ZC9Kt5qNOD9WiuEeq6rINCXM8SN267UKBzqMEqNRDqRJcuQJ5adczHCoqU04n4dPVK5vpMHtmq2RWMhSfcpxuFHl8befFTEDijERwU5wEwq-aP-EAy49_Em27m83bRxI5ETQgD9U_BkaFCvQQcbCuc',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuDySksXvVod4e-OA84ro01MK38nWPsEMiXUi6yWY4V3QJBgWRGsdZ9gjoebVuUT_pNlYvsr8tR9BLVSbuhLts-gqnIGkaOFEbLXJO_RWf6q2zuxtOCBtcF21NhrHn6ct7jBVnTka832JuwSowfiEi9IgPSAsPiQOpvDPZFyBUM1es8kps9gR3nnCrZntpu5Ttu2gjdXPc4BjNrJTbYdd7ZPmtZmR9hu3QlT1FRYWW24eIheVWwNoIiNK9O3HS0GhA3WLWNV2KNtHOo',
+    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=400&h=400&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&h=400&fit=crop&q=80',
 ];
 
 export default function ProductDetailPage() {
     const { id }        = useParams();
     const { user }      = useAuth();
     const { addToCart } = useCart();
+    const { addToast }  = useToast();
     const navigate      = useNavigate();
 
-    const [product, setProduct]           = useState(null);
-    const [loading, setLoading]           = useState(true);
-    const [added, setAdded]               = useState(false);
+    const [product, setProduct]               = useState(null);
+    const [loading, setLoading]               = useState(true);
+    const [adding, setAdding]                 = useState(false);
+    const [quantity, setQuantity]             = useState(1);
     const [selectedFinish, setSelectedFinish] = useState('Ochre Clay');
     const [selectedSize, setSelectedSize]     = useState('Medium');
-    /* Photo par défaut — Vue 3D accessible via le bouton */
-    const [show3D, setShow3D] = useState(false);
+    const [show3D, setShow3D]                 = useState(false);
 
     useEffect(() => {
         api.get(`/products/${id}`)
@@ -41,14 +41,23 @@ export default function ProductDetailPage() {
 
     async function handleAddToCart() {
         if (!user) { navigate('/login'); return; }
-        await addToCart(product.id, 1);
-        setAdded(true);
-        setTimeout(() => setAdded(false), 2000);
+        setAdding(true);
+        try {
+            await addToCart(product.id, quantity);
+            addToast(`${product.name} × ${quantity} ajouté au panier`, 'cart');
+        } catch {
+            addToast('Erreur lors de l\'ajout au panier', 'error');
+        } finally {
+            setAdding(false);
+        }
     }
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center" style={{ background: '#f9f9f8' }}>
-            <p style={{ color: '#584237' }}>Chargement...</p>
+            <div style={{ textAlign: 'center' }}>
+                <div className="skeleton" style={{ width: 48, height: 48, borderRadius: '50%', margin: '0 auto 16px' }} />
+                <div className="skeleton" style={{ width: 120, height: 12, margin: '0 auto' }} />
+            </div>
         </div>
     );
     if (!product) return (
@@ -173,16 +182,33 @@ export default function ProductDetailPage() {
                                 </div>
                             </div>
 
+                            {/* Sélecteur de quantité */}
+                            <div className="flex items-center gap-4 mb-8">
+                                <span style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(26,28,28,0.4)' }}>Quantité</span>
+                                <div className="flex items-center rounded-xl overflow-hidden" style={{ border: '1px solid rgba(26,28,28,0.12)' }}>
+                                    <button onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                                        className="w-10 h-10 flex items-center justify-center transition-colors hover:bg-gray-100"
+                                        style={{ color: '#1a1c1c', fontSize: 18 }}>−</button>
+                                    <span className="w-10 text-center font-bold text-sm">{quantity}</span>
+                                    <button onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
+                                        className="w-10 h-10 flex items-center justify-center transition-colors hover:bg-gray-100"
+                                        style={{ color: '#1a1c1c', fontSize: 18 }}>+</button>
+                                </div>
+                                <span style={{ fontSize: 12, color: '#584237' }}>{product.stock} en stock</span>
+                            </div>
+
                             <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                                <button onClick={handleAddToCart}
-                                    className="flex-1 py-5 rounded-lg font-bold text-white flex justify-center items-center gap-2 transition-all active:scale-90"
+                                <button onClick={handleAddToCart} disabled={adding || product.stock === 0}
+                                    className="flex-1 py-5 rounded-lg font-bold text-white flex justify-center items-center gap-2 transition-all active:scale-95 disabled:opacity-60"
                                     style={{ background: 'linear-gradient(to right, #9d4300, #f97316)', boxShadow: '0 10px 20px rgba(157,67,0,0.2)' }}>
-                                    <span className="material-symbols-outlined">shopping_cart</span>
-                                    {added ? 'Ajouté !' : 'Add to Cart'}
+                                    <span className="material-symbols-outlined">
+                                        {adding ? 'hourglass_empty' : product.stock === 0 ? 'remove_shopping_cart' : 'shopping_cart'}
+                                    </span>
+                                    {adding ? 'Ajout en cours...' : product.stock === 0 ? 'Rupture de stock' : 'Add to Cart'}
                                 </button>
-                                <button className="px-8 py-5 rounded-lg font-bold flex justify-center items-center transition-colors"
+                                <button className="px-8 py-5 rounded-lg font-bold flex justify-center items-center transition-colors hover:bg-red-50"
                                     style={{ border: '1px solid rgba(224,192,177,0.3)', color: '#1a1c1c' }}>
-                                    <span className="material-symbols-outlined">favorite</span>
+                                    <span className="material-symbols-outlined">favorite_border</span>
                                 </button>
                             </div>
 

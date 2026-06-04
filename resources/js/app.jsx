@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -42,9 +43,11 @@ function AppRoutes() {
 createRoot(document.getElementById('app')).render(
     <BrowserRouter>
         <AuthProvider>
-            <CartProvider>
-                <AppRoutes />
-            </CartProvider>
+            <ToastProvider>
+                <CartProvider>
+                    <AppRoutes />
+                </CartProvider>
+            </ToastProvider>
         </AuthProvider>
     </BrowserRouter>
 );
