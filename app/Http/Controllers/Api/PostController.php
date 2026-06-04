@@ -10,10 +10,19 @@ class PostController extends Controller
 {
     public function index(Request $request)
     {
-        $posts = Post::with(['user', 'comments.user'])
+        $userId = $request->user()?->id;
+
+        $posts = Post::with(['user'])
             ->withCount(['likes', 'comments'])
             ->latest()
             ->paginate(15);
+
+        if ($userId) {
+            $posts->getCollection()->transform(function ($post) use ($userId) {
+                $post->liked_by_me = $post->likes()->where('user_id', $userId)->exists();
+                return $post;
+            });
+        }
 
         return response()->json($posts);
     }
@@ -27,11 +36,22 @@ class PostController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $request->validate([
             'content' => 'required|string|max:2000',
+            'image'   => 'nullable|image|mimes:jpeg,png,webp,gif|max:5120',
         ]);
 
-        $post = $request->user()->posts()->create($data);
+        $imageUrl = null;
+        if ($request->hasFile('image')) {
+            $path     = $request->file('image')->store('posts', 'public');
+            $imageUrl = asset('storage/' . $path);
+        }
+
+        $post = $request->user()->posts()->create([
+            'content' => $request->input('content'),
+            'image'   => $imageUrl,
+        ]);
+
         $post->load('user');
         return response()->json($post, 201);
     }

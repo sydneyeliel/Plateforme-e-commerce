@@ -34,7 +34,7 @@ function PostCard({ post, onLike, onComment, onDelete }) {
         onComment(post.id);
     }
 
-    const img = FEED_POST_IMGS[post.id % 2];
+    const img = post.image || FEED_POST_IMGS[post.id % 2];
 
     return (
         <article className="rounded-[1.5rem] overflow-hidden group"
@@ -118,12 +118,17 @@ function PostCard({ post, onLike, onComment, onDelete }) {
 }
 
 export default function FeedPage() {
-    const { user }        = useAuth();
-    const [posts, setPosts]   = useState([]);
-    const [newPost, setNewPost] = useState('');
-    const [loading, setLoading] = useState(true);
-    const [page, setPage]       = useState(1);
-    const [hasMore, setHasMore] = useState(true);
+    const { user }               = useAuth();
+    const [posts, setPosts]      = useState([]);
+    const [newPost, setNewPost]  = useState('');
+    const [imageFile, setImageFile]       = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [loading, setLoading]  = useState(true);
+    const [posting, setPosting]  = useState(false);
+    const [postError, setPostError] = useState('');
+    const [page, setPage]        = useState(1);
+    const [hasMore, setHasMore]  = useState(true);
+    const fileInputRef           = useRef(null);
 
     async function fetchPosts(p = 1) {
         const res = await api.get('/posts', { params: { page: p } });
@@ -136,12 +141,43 @@ export default function FeedPage() {
 
     useEffect(() => { fetchPosts(1); }, []);
 
+    function handleImageSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+    }
+
+    function removeImage() {
+        setImageFile(null);
+        setImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+
     async function handlePublish(e) {
         e.preventDefault();
-        if (!newPost.trim()) return;
-        await api.post('/posts', { content: newPost });
-        setNewPost('');
-        fetchPosts(1);
+        if (!newPost.trim() || posting) return;
+        setPostError('');
+        setPosting(true);
+        try {
+            const formData = new FormData();
+            formData.append('content', newPost);
+            if (imageFile) formData.append('image', imageFile);
+
+            await api.post('/posts', formData, {
+                headers: { 'Content-Type': null },
+            });
+
+            setNewPost('');
+            removeImage();
+            fetchPosts(1);
+        } catch (err) {
+            setPostError(err.response?.status === 401
+                ? 'Vous devez être connecté pour publier.'
+                : 'Erreur lors de la publication. Réessayez.');
+        } finally {
+            setPosting(false);
+        }
     }
 
     async function handleLike(postId) {
@@ -217,18 +253,48 @@ export default function FeedPage() {
                                             rows={3}
                                             className="w-full rounded-xl p-4 text-sm focus:outline-none resize-none min-h-[100px]"
                                             style={{background:'#f3f4f3', border:'none'}}/>
+
+                                        {/* Preview image */}
+                                        {imagePreview && (
+                                            <div className="relative mt-3 rounded-xl overflow-hidden">
+                                                <img src={imagePreview} alt="preview"
+                                                    className="w-full object-cover rounded-xl" style={{maxHeight: 200}}/>
+                                                <button type="button" onClick={removeImage}
+                                                    className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white"
+                                                    style={{background:'rgba(0,0,0,0.55)'}}>
+                                                    <span className="material-symbols-outlined" style={{fontSize:16}}>close</span>
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {postError && (
+                                            <p className="text-xs mt-2 px-1" style={{color:'#c0392b'}}>{postError}</p>
+                                        )}
+
+                                        {/* Input fichier caché */}
+                                        <input ref={fileInputRef} type="file"
+                                            accept="image/jpeg,image/png,image/webp,image/gif"
+                                            className="hidden" onChange={handleImageSelect}/>
+
                                         <div className="flex justify-between items-center mt-4">
                                             <div className="flex gap-4">
-                                                {['image','view_in_ar','alternate_email'].map(ic => (
-                                                    <button key={ic} type="button" className="transition-colors hover:text-[#9d4300]" style={{color:'#584237'}}>
-                                                        <span className="material-symbols-outlined">{ic}</span>
-                                                    </button>
-                                                ))}
+                                                <button type="button" onClick={() => fileInputRef.current?.click()}
+                                                    className="transition-colors hover:text-[#9d4300]"
+                                                    style={{color: imageFile ? '#9d4300' : '#584237'}}
+                                                    title="Ajouter une image">
+                                                    <span className="material-symbols-outlined">image</span>
+                                                </button>
+                                                <button type="button" className="transition-colors hover:text-[#9d4300]" style={{color:'#584237'}}>
+                                                    <span className="material-symbols-outlined">view_in_ar</span>
+                                                </button>
+                                                <button type="button" className="transition-colors hover:text-[#9d4300]" style={{color:'#584237'}}>
+                                                    <span className="material-symbols-outlined">alternate_email</span>
+                                                </button>
                                             </div>
-                                            <button type="submit" disabled={!newPost.trim()}
+                                            <button type="submit" disabled={!newPost.trim() || posting}
                                                 className="px-6 py-2 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50 active:scale-95"
                                                 style={{background:'linear-gradient(to right, #9d4300, #f97316)'}}>
-                                                Post
+                                                {posting ? 'Publication...' : 'Post'}
                                             </button>
                                         </div>
                                     </div>
