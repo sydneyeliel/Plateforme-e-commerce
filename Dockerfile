@@ -39,9 +39,11 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Config nginx
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+RUN sed -i 's/\r//' /etc/nginx/http.d/default.conf
 
 # Config supervisor
 COPY docker/supervisord.conf /etc/supervisord.conf
+RUN sed -i 's/\r//' /etc/supervisord.conf
 
 # Permissions
 RUN mkdir -p /var/www/html/database \
