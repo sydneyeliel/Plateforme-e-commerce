@@ -8,6 +8,14 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Récupère le token OAuth depuis l'URL (?token=xxx)
+        const params = new URLSearchParams(window.location.search);
+        const urlToken = params.get('token');
+        if (urlToken) {
+            localStorage.setItem('token', urlToken);
+            window.history.replaceState({}, '', '/');
+        }
+
         const token = localStorage.getItem('token');
         if (token) {
             api.get('/me')

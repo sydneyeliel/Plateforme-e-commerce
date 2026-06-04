@@ -3,23 +3,37 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function RegisterPage() {
-    const [name, setName]         = useState('');
-    const [email, setEmail]       = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError]       = useState('');
-    const [loading, setLoading]   = useState(false);
-    const { register }            = useAuth();
-    const navigate                = useNavigate();
+    const [name, setName]                         = useState('');
+    const [email, setEmail]                       = useState('');
+    const [password, setPassword]                 = useState('');
+    const [passwordConfirm, setPasswordConfirm]   = useState('');
+    const [error, setError]                       = useState('');
+    const [loading, setLoading]                   = useState(false);
+    const { register }                            = useAuth();
+    const navigate                                = useNavigate();
 
     async function handleSubmit(e) {
         e.preventDefault();
         setError('');
+        if (password !== passwordConfirm) {
+            setError('Les mots de passe ne correspondent pas.');
+            return;
+        }
+        if (password.length < 8) {
+            setError('Le mot de passe doit contenir au moins 8 caractères.');
+            return;
+        }
         setLoading(true);
         try {
-            await register(name, email, password);
+            await register(name, email, password, passwordConfirm);
             navigate('/');
-        } catch {
-            setError('Erreur lors de la création du compte.');
+        } catch (err) {
+            const msg = err?.response?.data?.errors;
+            if (msg) {
+                setError(Object.values(msg).flat().join(' '));
+            } else {
+                setError('Erreur lors de la création du compte.');
+            }
         } finally {
             setLoading(false);
         }
@@ -71,6 +85,15 @@ export default function RegisterPage() {
                             <label className="absolute -top-2.5 left-3 px-1.5 text-[10px] font-bold uppercase tracking-wider z-20"
                                 style={{background:'#ffffff', color:'#9d4300'}}>Password</label>
                             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Min. 8 caractères" required
+                                className="w-full px-4 py-4 rounded-lg text-sm focus:outline-none"
+                                style={{background:'#f3f4f3', border:'1px solid rgba(224,192,177,0.2)', color:'#1a1c1c'}}/>
+                        </div>
+
+                        <div className="relative">
+                            <label className="absolute -top-2.5 left-3 px-1.5 text-[10px] font-bold uppercase tracking-wider z-20"
+                                style={{background:'#ffffff', color:'#9d4300'}}>Confirm Password</label>
+                            <input type="password" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)}
                                 placeholder="••••••••" required
                                 className="w-full px-4 py-4 rounded-lg text-sm focus:outline-none"
                                 style={{background:'#f3f4f3', border:'1px solid rgba(224,192,177,0.2)', color:'#1a1c1c'}}/>
