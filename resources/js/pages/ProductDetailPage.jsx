@@ -32,6 +32,7 @@ export default function ProductDetailPage() {
     const [selectedFinish, setSelectedFinish] = useState('Ochre Clay');
     const [selectedSize, setSelectedSize]     = useState('Medium');
     const [show3D, setShow3D]                 = useState(false);
+    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
     useEffect(() => {
         api.get(`/products/${id}`)
@@ -40,7 +41,8 @@ export default function ProductDetailPage() {
     }, [id]);
 
     async function handleAddToCart() {
-        if (!user) { navigate('/login'); return; }
+        if (!user) { setShowLoginPrompt(true); return; }
+        if (product.stock === 0) { addToast('Ce produit est indisponible', 'error'); return; }
         setAdding(true);
         try {
             await addToCart(product.id, quantity);
@@ -253,6 +255,38 @@ export default function ProductDetailPage() {
                     </div>
                 </section>
             </main>
+
+            {/* Modal connexion requise */}
+            {showLoginPrompt && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    style={{ background: 'rgba(26,28,28,0.5)', backdropFilter: 'blur(4px)' }}
+                    onClick={() => setShowLoginPrompt(false)}>
+                    <div className="w-full max-w-sm rounded-2xl p-8 text-center animate-fade-in-up"
+                        style={{ background: '#fff', boxShadow: '0 32px 80px rgba(0,0,0,0.2)' }}
+                        onClick={e => e.stopPropagation()}>
+                        <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-5"
+                            style={{ background: '#fff7ed' }}>
+                            <span className="material-symbols-outlined" style={{ color: '#9d4300', fontSize: 32 }}>lock</span>
+                        </div>
+                        <h3 className="text-xl font-extrabold tracking-tight mb-2">Connexion requise</h3>
+                        <p style={{ color: '#584237', fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
+                            Connectez-vous pour acheter <strong>{product.name}</strong> et profiter de toutes les fonctionnalités Aetheria.
+                        </p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setShowLoginPrompt(false)}
+                                className="flex-1 py-3 rounded-xl font-semibold text-sm transition-colors hover:bg-gray-100"
+                                style={{ border: '1px solid rgba(26,28,28,0.12)', color: '#584237' }}>
+                                Continuer à explorer
+                            </button>
+                            <button onClick={() => navigate('/login')}
+                                className="flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90"
+                                style={{ background: 'linear-gradient(to right, #9d4300, #f97316)' }}>
+                                Se connecter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <footer className="w-full pt-12 pb-8" style={{ borderTop: '1px solid rgba(224,192,177,0.2)', background: '#f9f9f8' }}>
                 <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6"

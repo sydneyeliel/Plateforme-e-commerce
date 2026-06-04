@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const FEED_POST_IMGS = [
     'https://lh3.googleusercontent.com/aida-public/AB6AXuA0GPn3Jt_mOlS2srA2qh9YfZiAQfWzG2nVktcK5Wjr5zew9yvuj6WjB_sgobinnWFedrzdU2ror3uiTkSIklAIUOr6utyc3igIeUuppmKGw_lB9wZXfYEbdkGocFD8AizZ3yfveBBr7l-RFj-lBFSbXUvO_tPCUAsr7n3dmYqye75V4LGY2Jy6loDFeFguJRWUBfxSraxZVcI66hOeyCpXBHVGSJzo3yrieRlkUV3-4tGDQUAC35rOMMlYN-BO9xcD1e9GobF1rxE',
@@ -119,6 +120,8 @@ function PostCard({ post, onLike, onComment, onDelete }) {
 
 export default function FeedPage() {
     const { user }               = useAuth();
+    const { addToast }           = useToast();
+    const textareaRef            = useRef(null);
     const [posts, setPosts]      = useState([]);
     const [newPost, setNewPost]  = useState('');
     const [imageFile, setImageFile]       = useState(null);
@@ -140,6 +143,17 @@ export default function FeedPage() {
     }
 
     useEffect(() => { fetchPosts(1); }, []);
+
+    function insertMention() {
+        const ta = textareaRef.current;
+        if (!ta) return;
+        const pos = ta.selectionStart;
+        const before = newPost.slice(0, pos);
+        const after  = newPost.slice(pos);
+        const updated = before + '@' + after;
+        setNewPost(updated);
+        setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = pos + 1; }, 0);
+    }
 
     function handleImageSelect(e) {
         const file = e.target.files[0];
@@ -248,7 +262,7 @@ export default function FeedPage() {
                                         {user.name?.[0]?.toUpperCase()}
                                     </div>
                                     <div className="flex-grow">
-                                        <textarea value={newPost} onChange={(e) => setNewPost(e.target.value)}
+                                        <textarea ref={textareaRef} value={newPost} onChange={(e) => setNewPost(e.target.value)}
                                             placeholder="Share your latest creation..."
                                             rows={3}
                                             className="w-full rounded-xl p-4 text-sm focus:outline-none resize-none min-h-[100px]"
@@ -284,10 +298,18 @@ export default function FeedPage() {
                                                     title="Ajouter une image">
                                                     <span className="material-symbols-outlined">image</span>
                                                 </button>
-                                                <button type="button" className="transition-colors hover:text-[#9d4300]" style={{color:'#584237'}}>
+                                                <button type="button"
+                                                    onClick={() => addToast('Attachement 3D bientôt disponible', 'info')}
+                                                    className="transition-colors hover:text-[#9d4300]"
+                                                    style={{color:'#584237'}}
+                                                    title="Objet 3D (bientôt)">
                                                     <span className="material-symbols-outlined">view_in_ar</span>
                                                 </button>
-                                                <button type="button" className="transition-colors hover:text-[#9d4300]" style={{color:'#584237'}}>
+                                                <button type="button"
+                                                    onClick={insertMention}
+                                                    className="transition-colors hover:text-[#9d4300]"
+                                                    style={{color:'#584237'}}
+                                                    title="Mentionner quelqu'un">
                                                     <span className="material-symbols-outlined">alternate_email</span>
                                                 </button>
                                             </div>

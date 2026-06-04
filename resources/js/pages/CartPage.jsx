@@ -3,10 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useCart } from '../context/CartContext';
 
-const ORDER_IMGS = [
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuAM2qbwQMvLUYQ1Q4I2GgzFhhyr4UmPD80lrY9zNkd5HqfprmyffpcFl-bbRgKVCRlollL3EMk7wJmsiKsF1fmZ9tk4cnoCrFniQjc3E9pTcM5p5VejvNOPQrvP4mIpF1ACbGw9HqAVvaLS8hkBENbd_lni3ZWj8OtUXUaeVj0T44JYB73FdTsYiUQ1qTNvffV9pza_D_BLy-Bq1fDDmhEYhVRb6wh2APZkq64E9ibCTjIhXVT4ZIzCHTIQSlJ2I--wIA8mfIXhjGI',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuDMvxy_AMb-xqOZBLWVbRI4qvctDTRgKeei_D7WqE3YVo18jVYKFLsdeCD6h65Z-herSpaykC2r89kj83OwHlzLEHG8RCLa8qgplDwy1BpSCo6QUmsEP8NgG8F7DYoVVx8qPg6Zuui3TSGytfJZsKdeqvGAod7kr38u-5Ruy8GYUWYv7gAJ1joMSVQDm3fPuAR2EzdyiS29is5TGwWdWwJjQkg-7LyNyMgS9dL_oMHAWKUBPR0fsJmzMMXNTp2A_O1NRA1c5iECjRU',
-];
+const FALLBACK_IMG = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&h=200&fit=crop&q=80';
 
 export default function CartPage() {
     const { cart, removeFromCart, updateItem, clearCart, itemCount } = useCart();
@@ -132,7 +129,8 @@ export default function CartPage() {
                                     {cart.items.map((item, i) => (
                                         <div key={item.id} className="flex items-center gap-4">
                                             <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style={{background:'#f3f4f3'}}>
-                                                <img src={ORDER_IMGS[i % 2]} alt="" className="w-full h-full object-cover"/>
+                                                <img src={item.product?.image || FALLBACK_IMG} alt={item.product?.name} className="w-full h-full object-cover"
+                                                    onError={e => { e.currentTarget.src = FALLBACK_IMG; }}/>
                                             </div>
                                             <div className="flex-grow">
                                                 <p className="font-bold text-sm">{item.product.name}</p>
