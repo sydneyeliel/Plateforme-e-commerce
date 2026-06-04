@@ -11,6 +11,7 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import OrdersPage from './pages/OrdersPage';
 import FeedPage from './pages/FeedPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import '../css/app.css';
 
 function PrivateRoute({ children }) {
@@ -29,7 +30,8 @@ function AppRoutes() {
                 <Route path="/products/:id" element={<ProductDetailPage />} />
                 <Route path="/feed"      element={<FeedPage />} />
                 <Route path="/login"     element={<LoginPage />} />
-                <Route path="/register"  element={<RegisterPage />} />
+                <Route path="/register"        element={<RegisterPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/cart"      element={<PrivateRoute><CartPage /></PrivateRoute>} />
                 <Route path="/orders"    element={<PrivateRoute><OrdersPage /></PrivateRoute>} />
             </Routes>

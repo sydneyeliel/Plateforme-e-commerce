@@ -57,4 +57,15 @@ class AuthController extends Controller
     {
         return response()->json($request->user());
     }
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $status = \Illuminate\Support\Facades\Password::sendResetLink(
+            $request->only('email')
+        );
+
+        return response()->json(['message' => __($status)]);
+    }
 }

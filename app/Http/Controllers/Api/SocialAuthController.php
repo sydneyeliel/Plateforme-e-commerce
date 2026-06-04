@@ -54,7 +54,7 @@ class SocialAuthController extends Controller
         Cache::put("oauth:{$code}", $token, now()->addMinutes(2));
 
         return redirect('/')->withCookie(
-            cookie('oauth_exchange', $code, 2, '/', null, $secure, true, false, 'Lax')
+            cookie('oauth_exchange', $code, 2, '/', null, $secure, true, true, 'Lax')
         );
     }
 }

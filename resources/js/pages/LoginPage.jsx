@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
@@ -10,6 +10,8 @@ export default function LoginPage() {
     const [loading, setLoading]   = useState(false);
     const { login }               = useAuth();
     const navigate                = useNavigate();
+    const [searchParams]          = useSearchParams();
+    const authError               = searchParams.get('auth_error');
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -64,9 +66,11 @@ export default function LoginPage() {
                             style={{background:'#ffffff', color:'rgba(88,66,55,0.4)'}}>OR</span>
                     </div>
 
-                    {error && (
+                    {(error || authError) && (
                         <div className="mb-4 px-4 py-3 rounded-lg text-sm"
-                            style={{background:'#ffdad6', color:'#93000a'}}>{error}</div>
+                            style={{background:'#ffdad6', color:'#93000a'}}>
+                            {error || 'La connexion OAuth a échoué. Veuillez réessayer.'}
+                        </div>
                     )}
 
                     <form className="space-y-6" onSubmit={handleSubmit}>
@@ -83,8 +87,8 @@ export default function LoginPage() {
                             <div className="flex justify-between absolute -top-2.5 left-3 right-3 z-20">
                                 <label className="px-1.5 text-[10px] font-bold uppercase tracking-wider"
                                     style={{background:'#ffffff', color:'#9d4300'}}>Password</label>
-                                <a href="#" className="px-1.5 text-[10px] font-bold uppercase tracking-wider hover:text-[#9d4300]"
-                                    style={{background:'#ffffff', color:'rgba(88,66,55,0.4)'}}>Forgot?</a>
+                                <Link to="/forgot-password" className="px-1.5 text-[10px] font-bold uppercase tracking-wider hover:text-[#9d4300]"
+                                    style={{background:'#ffffff', color:'rgba(88,66,55,0.4)'}}>Forgot?</Link>
                             </div>
                             <div className="relative">
                                 <input type={showPwd ? 'text' : 'password'}

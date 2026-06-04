@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 // ── Auth ──────────────────────────────────────────────────────────────────────
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
 Route::post('/login',    [AuthController::class, 'login'])->middleware('throttle:20,1');
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
 
 // Échange du code OAuth httpOnly contre le vrai token (usage unique, 2 min)
 Route::post('/auth/exchange', function (Request $request) {
