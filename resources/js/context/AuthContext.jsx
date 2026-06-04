@@ -9,12 +9,13 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         async function init() {
-            // Récupère le token OAuth depuis la session serveur (jamais dans l'URL)
-            const res = await fetch('/auth/token', { credentials: 'include' });
-            const data = await res.json();
-            if (data.token) {
-                localStorage.setItem('token', data.token);
-            }
+            // Échange le cookie httpOnly oauth_exchange contre le vrai token (usage unique)
+            try {
+                const res = await api.post('/auth/exchange');
+                if (res.data.token) {
+                    localStorage.setItem('token', res.data.token);
+                }
+            } catch {}
 
             const token = localStorage.getItem('token');
             if (token) {

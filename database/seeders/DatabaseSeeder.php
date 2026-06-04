@@ -109,6 +109,12 @@ class DatabaseSeeder extends Seeder
             ['user_id' => $user2->id, 'content' => 'The Obsidian Lounge is now open for virtual tours in the Showroom. Proud to have collaborated with the Aetheria team on this lighting setup.'],
             ['user_id' => $admin->id, 'content' => 'New drops this week: Kinetik Chrono and Sonic Monolith are now live. View them in 3D before you buy!'],
             ['user_id' => $user1->id, 'content' => 'The Aero Sprint V2 is everything I hoped for. The rig is clean, physics are buttery smooth.'],
+            ['user_id' => $user2->id, 'content' => 'Working on a new lighting pack for interior spaces. The volumetric fog effects are insane — sneak peek coming this weekend.'],
+            ['user_id' => $user1->id, 'content' => 'Hot take: procedural textures are going to replace hand-painted assets within 5 years. The level of detail you get from a good noise function is unreal.'],
+            ['user_id' => $admin->id, 'content' => 'Showroom update: you can now spin any object 360° directly in your browser. No VR headset needed. Try it on the Lume Sculpture.'],
+            ['user_id' => $user2->id, 'content' => 'Finally cracked subsurface scattering on the new organic material kit. The skin shader alone took 3 days — worth every hour.'],
+            ['user_id' => $user1->id, 'content' => 'Reminder that the Onyx Interface is limited to 4 units. Once they\'re gone, they\'re gone. Grabbed mine yesterday.'],
+            ['user_id' => $admin->id, 'content' => 'Community milestone: 500 objects sold on Aetheria. Thank you all — bigger drops are coming next month.'],
         ];
 
         foreach ($posts as $p) {

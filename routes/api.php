@@ -8,11 +8,32 @@ use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProductController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login',    [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+Route::post('/login',    [AuthController::class, 'login'])->middleware('throttle:20,1');
+
+// Échange du code OAuth httpOnly contre le vrai token (usage unique, 2 min)
+Route::post('/auth/exchange', function (Request $request) {
+    $code = $request->cookie('oauth_exchange');
+
+    if (!$code || strlen($code) !== 40) {
+        return response()->json(['token' => null]);
+    }
+
+    $token = Cache::pull("oauth:{$code}");
+
+    $response = response()->json(['token' => $token]);
+
+    if ($token) {
+        $response->withCookie(cookie()->forget('oauth_exchange'));
+    }
+
+    return $response;
+})->middleware('throttle:10,1');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
