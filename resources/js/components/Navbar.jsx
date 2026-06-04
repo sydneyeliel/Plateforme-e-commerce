@@ -35,10 +35,9 @@ export default function Navbar() {
     }
 
     const navLinks = [
-        { to: '/shop', label: 'Discover' },
-        { to: '/feed', label: 'Feed' },
-        { to: '/shop', label: 'Market' },
-        { to: '/shop', label: 'Showroom' },
+        { to: '/',     label: 'Discover'  },
+        { to: '/shop', label: 'Market'    },
+        { to: '/feed', label: 'Feed'      },
     ];
 
     return (
@@ -67,10 +66,7 @@ export default function Navbar() {
                 {/* Nav links */}
                 <div className="hidden md:flex items-center gap-7 text-sm">
                     {navLinks.map((link) => {
-                        const isActive =
-                            location.pathname === link.to &&
-                            link.label !== 'Market' &&
-                            link.label !== 'Showroom';
+                        const isActive = location.pathname === link.to;
                         return (
                             <Link
                                 key={link.label}

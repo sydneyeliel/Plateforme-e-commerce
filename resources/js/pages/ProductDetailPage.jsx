@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -36,7 +36,14 @@ export default function ProductDetailPage() {
 
     useEffect(() => {
         api.get(`/products/${id}`)
-            .then((res) => setProduct(res.data))
+            .then((res) => {
+                setProduct(res.data);
+                // Sauvegarde dans "Recently Viewed"
+                const stored = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+                const filtered = stored.filter(p => p.id !== res.data.id);
+                const updated = [{ id: res.data.id, name: res.data.name, price: res.data.price, image: res.data.image }, ...filtered].slice(0, 6);
+                localStorage.setItem('recentlyViewed', JSON.stringify(updated));
+            })
             .finally(() => setLoading(false));
     }, [id]);
 
@@ -138,10 +145,12 @@ export default function ProductDetailPage() {
                     {/* ── Panneau droit : Infos produit ── */}
                     <div className="lg:w-[40%] p-8 lg:p-12 xl:p-16 overflow-y-auto" style={{ background: '#ffffff' }}>
                         <div className="sticky top-8">
-                            <nav className="flex items-center gap-2 mb-8" style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#584237' }}>
-                                <a href="#" className="hover:text-[#9d4300] transition-colors">Discover</a>
+                            <nav className="flex items-center gap-2 mb-8 flex-wrap" style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#584237' }}>
+                                <Link to="/shop" className="hover:text-[#9d4300] transition-colors">Discover</Link>
                                 <span className="material-symbols-outlined text-xs">chevron_right</span>
-                                <a href="#" className="hover:text-[#9d4300] transition-colors">Collection</a>
+                                <Link to={`/shop?category=${product.category_id}`} className="hover:text-[#9d4300] transition-colors">
+                                    {product.category?.name ?? 'Collection'}
+                                </Link>
                                 <span className="material-symbols-outlined text-xs">chevron_right</span>
                                 <span style={{ color: '#1a1c1c', fontWeight: 700 }}>{product.name}</span>
                             </nav>

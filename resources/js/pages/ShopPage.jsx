@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -49,6 +49,7 @@ export default function ShopPage() {
     const [total, setTotal]                   = useState(0);
     const [sidebarTab, setSidebarTab]         = useState('Cart');
     const [showSidebar, setShowSidebar]       = useState(true);
+    const [recentlyViewed]                    = useState(() => JSON.parse(localStorage.getItem('recentlyViewed') || '[]'));
 
     const search = searchParams.get('q') ?? '';
 
@@ -618,6 +619,34 @@ export default function ShopPage() {
                                     }}
                                 >
                                     Your cart is empty
+                                </p>
+                            )
+                        ) : sidebarTab === 'Recently Viewed' ? (
+                            recentlyViewed.length > 0 ? (
+                                recentlyViewed.map((item) => (
+                                    <Link
+                                        key={item.id}
+                                        to={`/products/${item.id}`}
+                                        style={{
+                                            display: 'flex', gap: 10,
+                                            padding: '10px 0',
+                                            borderBottom: '1px solid rgba(26,28,28,0.06)',
+                                            textDecoration: 'none',
+                                        }}
+                                        className="hover:opacity-80 transition-opacity"
+                                    >
+                                        <div style={{ width: 52, height: 52, borderRadius: 8, background: '#f3f4f3', overflow: 'hidden', flexShrink: 0 }}>
+                                            {item.image && <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <p style={{ fontSize: 12, fontWeight: 600, color: '#1a1c1c', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
+                                            <p style={{ fontSize: 11, color: '#9d4300', fontWeight: 700, marginTop: 3 }}>${Number(item.price).toFixed(0)}</p>
+                                        </div>
+                                    </Link>
+                                ))
+                            ) : (
+                                <p style={{ fontSize: 12, color: 'rgba(26,28,28,0.28)', textAlign: 'center', paddingTop: 48 }}>
+                                    Aucun produit consulté récemment
                                 </p>
                             )
                         ) : (
