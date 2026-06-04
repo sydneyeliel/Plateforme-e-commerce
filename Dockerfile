@@ -52,8 +52,7 @@ RUN mkdir -p /var/www/html/database \
     && mkdir -p /run/nginx
 
 # Entrypoint
-COPY docker/entrypoint.sh /entrypoint.sh
-RUN sed -i 's/\r//' /entrypoint.sh && chmod +x /entrypoint.sh
+RUN printf '#!/bin/sh\nset -e\nif [ ! -f /var/www/html/database/database.sqlite ]; then\n  touch /var/www/html/database/database.sqlite\nfi\nphp artisan migrate --force\nphp artisan storage:link --force 2>/dev/null || true\nphp artisan config:cache\nphp artisan route:cache\nphp artisan view:cache\nexec "$@"\n' > /entrypoint.sh && chmod +x /entrypoint.sh
 
 EXPOSE 80
 
