@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -9,6 +9,18 @@ export default function Navbar() {
     const navigate         = useNavigate();
     const location         = useLocation();
     const [searchQuery, setSearchQuery] = useState('');
+    const [menuOpen, setMenuOpen]       = useState(false);
+    const menuRef                       = useRef(null);
+
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setMenuOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     async function handleLogout() {
         await logout();
@@ -168,13 +180,64 @@ export default function Navbar() {
                                 </span>
                             </button>
 
-                            <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold cursor-pointer shrink-0"
-                                style={{ background: '#9d4300' }}
-                                onClick={handleLogout}
-                                title="Se déconnecter"
-                            >
-                                {user.name?.[0]?.toUpperCase()}
+                            <div className="relative" ref={menuRef}>
+                                <button
+                                    onClick={() => setMenuOpen((o) => !o)}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 cursor-pointer"
+                                    style={{ background: '#9d4300' }}
+                                    title={user.name}
+                                >
+                                    {user.name?.[0]?.toUpperCase()}
+                                </button>
+
+                                {menuOpen && (
+                                    <div
+                                        className="absolute right-0 mt-2 w-52 rounded-xl overflow-hidden"
+                                        style={{
+                                            background: '#ffffff',
+                                            boxShadow: '0 8px 32px rgba(26,28,28,0.12)',
+                                            border: '1px solid rgba(224,192,177,0.2)',
+                                            zIndex: 100,
+                                        }}
+                                    >
+                                        <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(224,192,177,0.15)' }}>
+                                            <p className="text-sm font-bold truncate" style={{ color: '#1a1c1c' }}>{user.name}</p>
+                                            <p className="text-xs truncate" style={{ color: 'rgba(88,66,55,0.6)' }}>{user.email}</p>
+                                        </div>
+
+                                        <div className="py-1">
+                                            <Link
+                                                to="/orders"
+                                                onClick={() => setMenuOpen(false)}
+                                                className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-[#f9f0eb]"
+                                                style={{ color: '#1a1c1c' }}
+                                            >
+                                                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>receipt_long</span>
+                                                Mes commandes
+                                            </Link>
+                                            <Link
+                                                to="/feed"
+                                                onClick={() => setMenuOpen(false)}
+                                                className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-[#f9f0eb]"
+                                                style={{ color: '#1a1c1c' }}
+                                            >
+                                                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>dynamic_feed</span>
+                                                Mon feed
+                                            </Link>
+                                        </div>
+
+                                        <div style={{ borderTop: '1px solid rgba(224,192,177,0.15)' }} className="py-1">
+                                            <button
+                                                onClick={handleLogout}
+                                                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-colors hover:bg-red-50 cursor-pointer"
+                                                style={{ color: '#c0392b' }}
+                                            >
+                                                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>logout</span>
+                                                Se déconnecter
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </>
                     ) : (
